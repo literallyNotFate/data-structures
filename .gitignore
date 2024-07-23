@@ -6,5 +6,6 @@ Makefile
 *.moc
 .vscode/*
 .cache/*
+.git/*
 Testing/*
 .DS_Store
