@@ -1,7 +1,8 @@
 #include <DynamicArray.h>
+#include <gtest/gtest.h>
+
 #include <cstdlib>
 #include <ctime>
-#include <gtest/gtest.h>
 #include <iostream>
 #include <stdexcept>
 #include <sys/errno.h>
@@ -49,7 +50,8 @@ TEST(DynamicArrayConstructor, CopyConstructor) {
   DynamicArray<int> d1(3, 0);
   DynamicArray<int> d2(d1);
 
-  EXPECT_EQ(d1.get_size(), d2.get_size()) << "Sizes of copies should be eqial!";
+  EXPECT_EQ(d1.get_size(), d2.get_size())
+      << "Sizes of copies should be equal !";
   EXPECT_EQ(d1.get_capacity(), d2.get_capacity())
       << "Capacities of copies should be eqial!";
 

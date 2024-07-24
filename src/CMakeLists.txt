@@ -1,4 +1,5 @@
 add_subdirectory(linear)
+add_subdirectory(utils)
 
 file(GLOB_RECURSE SOURCES LIST_DIRECTORIES false *.h *.cpp)
 add_library(${CMAKE_PROJECT_NAME}_lib STATIC ${SOURCES})
