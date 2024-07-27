@@ -33,9 +33,14 @@ public:
   inline int get_size() const { return this->size; }
   inline int get_index() const { return this->index; }
 
-  // increment operator
+  // increment/decrement operator
   inline Iterator<T> &operator++() {
     ++this->index;
+    return *this;
+  }
+
+  inline Iterator<T> &operator--() {
+    --this->index;
     return *this;
   }
 
@@ -80,6 +85,14 @@ public:
 
   inline bool operator>(const Iterator<T> &other) const {
     return this->index > other.index;
+  }
+
+  inline bool operator<=(const Iterator<T> &other) const {
+    return this->index <= other.index;
+  }
+
+  inline bool operator>=(const Iterator<T> &other) const {
+    return this->index >= other.index;
   }
 };
 

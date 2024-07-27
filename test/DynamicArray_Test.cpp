@@ -1,10 +1,13 @@
-#include "Iterator.h"
 #include <DynamicArray.h>
+#include <Iterator.h>
+
 #include <gtest/gtest.h>
 
+#include <cctype>
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
+#include <numeric>
 #include <stdexcept>
 #include <string>
 #include <sys/errno.h>
@@ -260,6 +263,29 @@ TEST(DynamicArrayModify, Insert) {
       << " is out of range!";
 }
 
+TEST(DynamicArrayModify, InsertVector) {
+  int capacity = 3;
+  DynamicArray<int> d(capacity);
+
+  d.push_back(1);
+  d.push_back(2);
+
+  EXPECT_EQ(d.get_capacity(), capacity)
+      << "Capacity should be equal to " << capacity;
+
+  std::vector<int> vec{10, 20, 30};
+  int new_size = d.get_size() + vec.size();
+  d.insert(1, vec);
+
+  EXPECT_EQ(d.get_size(), new_size) << "Size should change to " << new_size;
+  EXPECT_EQ(d.get_capacity(), new_size)
+      << "Array should be resized to capacity: " << new_size;
+
+  std::vector<int> expected{1, 10, 20, 30, 2};
+  for (int i = 0; i < d.get_size(); i++)
+    EXPECT_EQ(d[i], expected[i]) << "Values should be equal!";
+}
+
 TEST(DynamicArrayModify, EraseBack) {
   DynamicArray<int> d(5);
   int size = 2;
@@ -348,7 +374,7 @@ TEST(DynamicArrayModify, EraseRange) {
   EXPECT_THROW(d.erase_range(it + 1, it + 99), std::out_of_range)
       << "Should throw out_of_range!";
   EXPECT_THROW(d.erase_range(it + 2, it + 1), std::invalid_argument)
-      << "it1 should be greater than it2!";
+      << "it1 should be less than it2!";
 
   d.erase_range(it + 1, it + 3);
   size -= range;
@@ -364,6 +390,45 @@ TEST(DynamicArrayModify, EraseRange) {
   EXPECT_FALSE(d.contains(2)) << "Deleted element (2) should not be in array!";
   EXPECT_FALSE(d.contains(3)) << "Deleted element (3) should not be in array!";
   EXPECT_FALSE(d.contains(4)) << "Deleted element (4) should not be in array!";
+}
+
+TEST(DynamicArrayModify, EraseAll) {
+  int size = 5;
+  int *int_array = new int[size]{1, 1, 2, 3, 1};
+  DynamicArray<int> d(size, int_array);
+
+  d.erase_all(1);
+
+  size = 2;
+  int *new_array = new int[size]{2, 3};
+
+  for (int i = 0; i < size; i++)
+    EXPECT_EQ(d[i], new_array[i]) << "Values of arrays should be equal!";
+
+  // todo
+}
+
+TEST(DynamicArrayModify, EraseIf) {
+  int size = 7;
+  int *int_array = new int[size]{3, 4, 5, 2, 0, 5, 5};
+  DynamicArray<int> d(size, int_array);
+
+  d.erase_if([](int x) { return x % 2 != 0; });
+
+  size = 3;
+  int *new_array = new int[size]{4, 2, 0};
+
+  EXPECT_EQ(d.get_size(), size) << "New size after erasing should be: " << size;
+  for (int i = 0; i < size; i++)
+    EXPECT_EQ(d[i], new_array[i]) << "Values of arrays should be equal!";
+
+  d.erase_if([](int x) { return x > 10; });
+  EXPECT_EQ(d.get_size(), size)
+      << "Size should not change if elements were not found!";
+
+  d.erase_range(d.begin(), d.end());
+  EXPECT_THROW(d.erase_if([](int x) { return x > 0; }), std::length_error)
+      << "Should throw length_error if array is empty!";
 }
 
 // ----------
@@ -419,6 +484,11 @@ TEST(DynamicArrayMethods, Resize) {
       << "New capacity should be: " << new_capacity;
   EXPECT_NE(&old_array, &new_array)
       << "New array must point to another address as the old one!";
+
+  new_capacity = 3;
+  d.resize(new_capacity);
+  EXPECT_NE(d.get_capacity(), new_capacity)
+      << "Capacity should not be changed!";
 }
 
 TEST(DynamicArrayMethods, EqualOperation) {
@@ -507,6 +577,31 @@ TEST(DynamicArrayMethods, FindAll) {
       << "Should throw length_error if array is empty!";
 }
 
+TEST(DynamicArrayMethods, FindIf) {
+  int *int_array = new int[]{1, 2, 3, 4, 5, 6};
+  DynamicArray<int> d(5, int_array);
+
+  Iterator<int> it = d.begin();
+  std::vector<Iterator<int>> iterators{it + 1, it + 3, it + 5};
+  std::vector<Iterator<int>> f = d.find_if([](int x) { return x % 2 == 0; });
+
+  for (int i = 0; i < f.size(); i++) {
+    EXPECT_EQ(f[i].get_index(), iterators[i].get_index())
+        << "Indexes of found iterators should be equal!";
+    EXPECT_EQ(*(f[i]), *(iterators[i]))
+        << "Values of found iterators should be equal!";
+  }
+
+  std::vector<Iterator<int>> not_found;
+  f = d.find_if([](int x) { return x < 0; });
+
+  EXPECT_EQ(f.size(), 0) << "Vector of not found values must be 0!";
+
+  d.erase_range(d.begin(), d.end());
+  EXPECT_THROW(d.find_if([](int x) { return x > 0; }), std::length_error)
+      << "Should throw length_error if array is empty!";
+}
+
 TEST(DynamicArrayMethods, ReplaceOccurence) {
   int *int_array = new int[]{1, 2, 3, 4, 5};
   DynamicArray<int> d(5, int_array);
@@ -515,7 +610,7 @@ TEST(DynamicArrayMethods, ReplaceOccurence) {
   d.replace(3, 99);
 
   for (int i = 0; i < 5; i++)
-    EXPECT_EQ(d[i], new_array[i]);
+    EXPECT_EQ(d[i], new_array[i]) << "Values of arrays must be equal!";
 
   EXPECT_THROW(d.replace(100, 2), std::invalid_argument)
       << "Should throw invalid_argument if element is not found!";
@@ -534,7 +629,7 @@ TEST(DynamicArrayMethods, ReplaceIterator) {
   d.replace(it + 2, 99);
 
   for (int i = 0; i < 5; i++)
-    EXPECT_EQ(d[i], new_array[i]);
+    EXPECT_EQ(d[i], new_array[i]) << "Values of arrays must be equal!";
 
   EXPECT_THROW(d.replace(it + 100, 2), std::out_of_range)
       << "Should throw out_of_range if iterator is not valid!";
@@ -552,13 +647,39 @@ TEST(DynamicArrayMethods, ReplaceAll) {
   d.replace_all(3, 99);
 
   for (int i = 0; i < 5; i++)
-    EXPECT_EQ(d[i], new_array[i]);
+    EXPECT_EQ(d[i], new_array[i]) << "Values of arrays must be equal!";
 
-  EXPECT_THROW(d.replace(100, 2), std::invalid_argument)
+  EXPECT_THROW(d.replace_all(100, 2), std::invalid_argument)
       << "Should throw invalid_argument if element is not found!";
 
   d.erase_range(d.begin(), d.end());
-  EXPECT_THROW(d.replace(1, 99), std::length_error)
+  EXPECT_THROW(d.replace_all(1, 99), std::length_error)
+      << "Should throw length_error if array is empty!";
+}
+
+TEST(DynamicArrayMethods, ReplaceIf) {
+  int size = 6;
+  std::string *str_array =
+      new std::string[size]{"abc", "cba", "string", "string", "qwe", "zxcv"};
+  DynamicArray<std::string> d(size, str_array);
+
+  std::string *new_array =
+      new std::string[size]{"X", "X", "string", "string", "X", "zxcv"};
+
+  d.replace_if([](std::string str) { return str.size() == 0; }, "X");
+  for (int i = 0; i < size; i++)
+    EXPECT_EQ(d[i], str_array[i])
+        << "Values should not change, nothing satifies the condition!";
+
+  d.replace_if([](std::string str) { return str.size() <= 3; }, "X");
+
+  for (int i = 0; i < 5; i++)
+    EXPECT_EQ(d[i], new_array[i]) << "Values of arrays must be equal!";
+
+  d.erase_range(d.begin(), d.end());
+  EXPECT_THROW(
+      d.replace_if([](std::string str) { return str.size() > 5; }, "X"),
+      std::length_error)
       << "Should throw length_error if array is empty!";
 }
 
@@ -601,4 +722,212 @@ TEST(DynamicArrayMethods, ToString) {
   std::string str = d.to_string();
   std::string res = "a, b, c.";
   EXPECT_EQ(str, res) << "String should be equal to each other!";
+}
+
+// ----------
+// Useful functions test
+// ----------
+
+TEST(DynamicArrayUsefulFunctions, CountElement) {
+  std::vector<char> vec{'a', 'b', 'c', 'a', 'x', 'b', 'b', 'x'};
+  DynamicArray<char> d(vec);
+
+  char el = 'b';
+  int count = d.count(el);
+
+  EXPECT_EQ(count, 3) << "Number of elements should be equal to 3";
+
+  el = 'x';
+  count = d.count(el);
+  EXPECT_NE(count, 0) << "Number of elements should be more than 0.";
+
+  el = 'd';
+  count = d.count(el);
+  EXPECT_EQ(count, 0) << "There are no elements: " << el;
+}
+
+TEST(DynamicArrayUsefulFunctions, CountIf) {
+  std::vector<int> vec{1, 2, 3, 4, 5, 6, 7, 8, 9};
+  DynamicArray<int> d(vec);
+
+  int count = d.count_if([](int x) { return x % 2 == 0; });
+  EXPECT_EQ(count, 4) << "Number of even elements should be 4!";
+
+  count = d.count_if([](int x) { return x % 2 != 0; });
+  EXPECT_EQ(count, 5) << "Number of odd elements should be 5!";
+
+  count = d.count_if([](int x) { return x < 0; });
+  EXPECT_EQ(count, 0) << "There are no elemets that are < 0!";
+}
+
+TEST(DynamicArrayUsefulFunctions, Filter) {
+  std::vector<std::string> vec{"abc",    "cde",   "drf",   "qwe",
+                               "qwerty", "ghjjt", "nfwje", "akjskg"};
+  DynamicArray<std::string> d(vec);
+
+  std::vector<std::string> filter_vec = {"abc", "cde", "drf", "qwe"};
+  DynamicArray<std::string> filtered1 =
+      d.filter([](std::string str) { return str.size() == 3; });
+
+  EXPECT_EQ(filtered1.get_size(), filter_vec.size())
+      << "Size of filtered array should be: " << filter_vec.size();
+
+  for (int i = 0; i < filtered1.get_size(); i++)
+    EXPECT_EQ(filtered1[i], filter_vec[i])
+        << "Values of arrays should be equal!";
+
+  DynamicArray<std::string> filtered2 =
+      filtered1.filter([](std::string str) { return str.size() > 3; });
+
+  EXPECT_EQ(filtered2.get_size(), filtered1.get_size())
+      << "If nothing was found, should return array itself!";
+
+  for (int i = 0; i < filtered2.get_size(); i++)
+    EXPECT_EQ(filtered2[i], filtered1[i]) << "Nothing should change!";
+
+  filtered2.erase_range(filtered2.begin(), filtered2.end());
+  EXPECT_THROW(
+      filtered2.filter([](std::string str) { return str.size() == 0; }),
+      std::length_error)
+      << "Should throw length_error if array is empty!";
+}
+
+TEST(DynamicArrayUsefulFunctions, Map) {
+  std::vector<float> vec{1.2, 2.4, 3.6, 4.8, 5.0};
+  DynamicArray<float> d(vec);
+
+  d.map([](float x) { std::cout << x << " "; });
+
+  std::vector<float> results;
+  d.map([&results](float x) { results.push_back(x * 2); });
+
+  std::vector<float> expected = {2.4, 4.8, 7.2, 9.6, 10.0};
+  EXPECT_EQ(results, expected);
+
+  for (int i = 0; i < results.size(); i++) {
+    EXPECT_NE(vec[i], results[i]) << "Values should not be equal!";
+    EXPECT_EQ(expected[i], results[i]);
+  }
+
+  d.erase_range(d.begin(), d.end());
+  EXPECT_THROW(d.map([](float x) { std::cout << x << " "; }), std::length_error)
+      << "Should throw length_error if array is empty!";
+}
+
+TEST(DynamicArrayUsefulFunctions, Apply) {
+  std::vector<int> vec{6, 12, 24, 10, 50};
+  DynamicArray<int> d1(vec);
+
+  d1 = d1.apply([](int x) { return x / 2; });
+  std::vector<int> expected{3, 6, 12, 5, 25};
+
+  for (int i = 0; i < expected.size(); i++)
+    EXPECT_EQ(d1[i], expected[i])
+        << "Values of expected and resulting arrays should be equal!";
+
+  std::vector<std::string> strings{"hello", "world", "abc"};
+  DynamicArray<std::string> d2(strings);
+
+  d2 = d2.apply([](std::string str) {
+    if (!str.empty())
+      str[0] = std::toupper(str[0]);
+
+    return str;
+  });
+
+  std::vector<std::string> expected_strs{"Hello", "World", "Abc"};
+  for (int i = 0; i < expected_strs.size(); i++)
+    EXPECT_EQ(d2[i], expected_strs[i])
+        << "Values of expected and resulting arrays should be equal!";
+
+  d1.erase_range(d1.begin(), d1.end());
+  EXPECT_THROW(d1.apply([](int x) { return x * 2; }), std::length_error)
+      << "Should throw length_error if array is empty!";
+}
+
+TEST(DynamicArrayUsefulFunctions, Reduce) {
+  std::vector<int> vec{1, 2, 3, 4, 5};
+  DynamicArray<int> d(vec);
+
+  int sum = d.reduce(0);
+  int expected = std::accumulate(vec.begin(), vec.end(), 0);
+
+  EXPECT_EQ(sum, expected)
+      << "Values of the sum and expected sum should be equal!";
+
+  int mult = d.reduce(0, [](int x, int y) { return x * y; });
+  expected = std::accumulate(vec.begin(), vec.end(), 0,
+                             [](int x, int y) { return x * y; });
+
+  EXPECT_EQ(mult, expected)
+      << "Values of the multiplication results and expected should be equal!";
+
+  d.erase_range(d.begin(), d.end());
+  EXPECT_THROW(d.reduce(0), std::length_error)
+      << "Should throw length_error if array is empty!";
+}
+
+TEST(DynamicArrayUsefulFunctions, Reverse) {
+  std::vector<int> vec{1, 2, 3, 4, 5};
+  DynamicArray<int> d1(vec);
+
+  std::vector<int> expected{5, 4, 3, 2, 1};
+  d1.reverse();
+
+  for (int i = 0; i < d1.get_size(); i++)
+    EXPECT_EQ(d1[i], expected[i])
+        << "Values of array and expected values should be equal!";
+
+  DynamicArray<int> d2 = d1.reversed();
+  EXPECT_EQ(d2.get_size(), vec.size()) << "Sizes should be equal!";
+
+  for (int i = 0; i < d2.get_size(); i++)
+    EXPECT_EQ(d2[i], vec[i])
+        << "Values of array should be equal to initial vector values!";
+
+  d1.erase_range(d1.begin(), d1.end());
+  EXPECT_THROW(d1.reverse(), std::length_error)
+      << "Should throw length_error if array is empty!";
+  EXPECT_THROW(d1 = d1.reversed(), std::length_error)
+      << "Should throw length_error if array is empty!";
+}
+
+TEST(DynamicArrayUsefulFunctions, ReversePartial) {
+  std::vector<int> vec{1, 2, 3, 4, 5};
+  DynamicArray<int> d(vec);
+
+  Iterator<int> it = d.begin();
+  std::vector<int> expected{1, 4, 3, 2, 5};
+
+  EXPECT_THROW(d.reverse_partial(it - 99, it + 1), std::out_of_range)
+      << "Should throw out_of_range!";
+  EXPECT_THROW(d.reverse_partial(it + 1, it + 99), std::out_of_range)
+      << "Should throw out_of_range!";
+  EXPECT_THROW(d.reverse_partial(it + 3, it + 1), std::invalid_argument)
+      << "it1 should be less than it2!";
+
+  d.reverse_partial(it + 1, it + 3);
+  for (int i = 0; i < d.get_size(); i++)
+    EXPECT_EQ(d[i], expected[i])
+        << "Values of array and expected should be equal!";
+
+  d.erase_range(d.begin(), d.end());
+  EXPECT_THROW(d.reverse_partial(it + 1, it + 3), std::length_error)
+      << "Should throw length_error if array is empty!";
+}
+
+TEST(DynamicArrayUsefulFunctions, RemoveDuplicates) {
+  std::vector<char> vec{'a', 'a', 'b', 'b', 'c'};
+  DynamicArray<char> d(vec);
+
+  d = d.remove_duplicates();
+  std::vector<char> expected{'a', 'b', 'c'};
+
+  for (int i = 0; i < d.get_size(); i++)
+    EXPECT_EQ(d[i], expected[i])
+        << "Values of array and expected should be equal!";
+
+  d.erase_range(d.begin(), d.end());
+  EXPECT_THROW(d = d.remove_duplicates(), std::length_error)
+      << "Should throw length_error if array is empty!";
 }

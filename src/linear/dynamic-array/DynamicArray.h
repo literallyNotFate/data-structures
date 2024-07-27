@@ -6,9 +6,12 @@
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
+#include <functional>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
+#include <unordered_set>
+#include <vector>
 
 // Dynamic array
 
@@ -64,21 +67,26 @@ public:
   void push_back(const T &value);
   void push_begin(const T &value);
   void insert(const int &index, const T &value);
+  void insert(const int &index, const std::vector<T> &vec);
 
   // removing from array
   void erase_back();
   void erase_begin();
   void erase(const Iterator<T> it);
   void erase_range(const Iterator<T> it1, const Iterator<T> it2);
+  void erase_all(const T &element);
+  void erase_if(std::function<bool(T)> fn);
 
   // find
   Iterator<T> find(const T &element) const;
   std::vector<Iterator<T>> find_all(const T &element) const;
+  std::vector<Iterator<T>> find_if(std::function<bool(T)> fn) const;
 
   // replace
   void replace(const T &element, const T &replace);
   void replace(const Iterator<T> it, const T &replace);
   void replace_all(const T &element, const T &replace);
+  void replace_if(std::function<bool(T)> fn, const T &replace);
 
   // converting methods
   inline const std::vector<T> to_vector() const {
@@ -88,6 +96,20 @@ public:
     return DynamicArray<T>(vec);
   }
   const std::string to_string() const;
+
+  // useful functions
+  int count(const T &element) const;
+  int count_if(std::function<bool(T)> fn) const;
+  DynamicArray<T> filter(std::function<bool(T)> fn) const;
+  void map(std::function<void(T)> fn) const;
+  DynamicArray<T> apply(std::function<T(T)> fn) const;
+  T reduce(T init, std::function<T(T, T)> fn = std::plus<T>()) const;
+  void reverse();
+  DynamicArray<T> reversed() const;
+  void reverse_partial(const Iterator<T> it1, const Iterator<T> it2);
+  DynamicArray<T> reversed_partial(const Iterator<T> it1,
+                                   const Iterator<T> it2) const;
+  DynamicArray<T> remove_duplicates() const;
 
   // iterators
   inline Iterator<T> begin() const {
@@ -255,15 +277,18 @@ bool DynamicArray<T>::operator!=(const DynamicArray<T> &other) const {
 // ---------
 
 // Resize array
-template <typename T> void DynamicArray<T>::resize(const int &capacity) {
-  T *new_array = new T[capacity];
+template <typename T> void DynamicArray<T>::resize(const int &new_capacity) {
+  if (new_capacity <= this->capacity)
+    return;
+
+  T *new_array = new T[new_capacity];
   if (this->array != nullptr) {
     std::memcpy(new_array, this->array, this->size * sizeof(T));
     delete[] this->array;
   }
 
   this->array = new_array;
-  this->capacity = capacity;
+  this->capacity = new_capacity;
 }
 
 // Contains element in array
@@ -318,6 +343,27 @@ void DynamicArray<T>::insert(const int &index, const T &value) {
   this->array[index] = value;
 }
 
+// Insert vector at given index
+template <typename T>
+void DynamicArray<T>::insert(const int &index, const std::vector<T> &vec) {
+  if (this->is_full())
+    throw std::length_error("Array is full, try to resize it!");
+
+  if (index < 0 || index >= this->size)
+    throw std::out_of_range("Provided index is out of range!");
+
+  if (this->size + vec.size() > this->capacity)
+    this->resize(this->size + vec.size());
+
+  for (int i = this->size - 1; i >= index; --i)
+    this->array[i + vec.size()] = this->array[i];
+
+  for (int i = 0; i < vec.size(); ++i)
+    this->array[index + i] = vec[i];
+
+  this->size += vec.size();
+}
+
 // Erase from back
 template <typename T> void DynamicArray<T>::erase_back() {
   if (this->is_empty())
@@ -365,6 +411,21 @@ void DynamicArray<T>::erase_range(const Iterator<T> it1,
   this->size -= (it2.get_index() - it1.get_index() + 1);
 }
 
+// Erase all occurrences of an element
+template <typename T> void DynamicArray<T>::erase_all(const T &element) {
+  std::vector<Iterator<T>> items = this->find_all(element);
+  for (auto it = items.rbegin(); it != items.rend(); ++it)
+    this->erase(*it);
+}
+
+// Erase element by predicate
+template <typename T>
+void DynamicArray<T>::erase_if(std::function<bool(T)> fn) {
+  std::vector<Iterator<T>> items = this->find_if(fn);
+  for (auto it = items.rbegin(); it != items.rend(); ++it)
+    this->erase(*it);
+}
+
 // Find element in the stack
 template <typename T>
 Iterator<T> DynamicArray<T>::find(const T &element) const {
@@ -394,6 +455,22 @@ std::vector<Iterator<T>> DynamicArray<T>::find_all(const T &element) const {
   return iterators;
 }
 
+// Find all elements that satisfy the condition/predicate
+template <typename T>
+std::vector<Iterator<T>>
+DynamicArray<T>::find_if(std::function<bool(T)> fn) const {
+  if (this->is_empty())
+    throw std::length_error("Array is empty, try to add elements!");
+
+  std::vector<Iterator<T>> iterators;
+  for (Iterator<T> it = begin(); it != end() + 1; ++it) {
+    if (fn(*it))
+      iterators.push_back(it);
+  }
+
+  return iterators;
+}
+
 // Replace given element
 template <typename T>
 void DynamicArray<T>::replace(const T &element, const T &replace) {
@@ -416,10 +493,18 @@ void DynamicArray<T>::replace(const Iterator<T> it, const T &replace) {
 // Replace all occurrences of element
 template <typename T>
 void DynamicArray<T>::replace_all(const T &element, const T &replace) {
-  if (!this->contains(element))
+  std::vector<Iterator<T>> items = this->find_all(element);
+  if (items.size() == 0)
     throw std::invalid_argument("Element was not found!");
 
-  std::vector<Iterator<T>> items = this->find_all(element);
+  for (Iterator<T> it : items)
+    *it = replace;
+}
+
+// Replace all occurrences of element that satisfy the condition
+template <typename T>
+void DynamicArray<T>::replace_if(std::function<bool(T)> fn, const T &replace) {
+  std::vector<Iterator<T>> items = this->find_if(fn);
   for (Iterator<T> it : items)
     *it = replace;
 }
@@ -436,6 +521,144 @@ template <typename T> const std::string DynamicArray<T>::to_string() const {
 
   ss << ".";
   return ss.str();
+}
+
+// Count element
+template <typename T> int DynamicArray<T>::count(const T &element) const {
+  int count = 0;
+  for (int i = 0; i < this->size; i++) {
+    if (this->array[i] == element)
+      count++;
+  }
+
+  return count;
+}
+
+// Count element by predicate
+template <typename T>
+int DynamicArray<T>::count_if(std::function<bool(T)> fn) const {
+  int count = 0;
+  for (int i = 0; i < this->size; i++) {
+    if (fn(this->array[i]))
+      count++;
+  }
+
+  return count;
+}
+
+// Filter elemets in the array
+template <typename T>
+DynamicArray<T> DynamicArray<T>::filter(std::function<bool(T)> fn) const {
+  if (this->is_empty())
+    throw std::length_error("Array is empty, try to add elements!");
+
+  DynamicArray<T> result(this->capacity);
+  for (int i = 0; i < this->size; i++) {
+    if (fn(this->array[i]))
+      result.push_back(this->array[i]);
+  }
+
+  if (result.get_size() == 0)
+    return *this;
+
+  return result;
+}
+
+// Map array elements
+template <typename T>
+void DynamicArray<T>::map(std::function<void(T)> fn) const {
+  if (this->is_empty())
+    throw std::length_error("Array is empty, try to add elements!");
+
+  for (int i = 0; i < this->size; i++)
+    fn(this->array[i]);
+}
+
+// Apply function to array
+template <typename T>
+DynamicArray<T> DynamicArray<T>::apply(std::function<T(T)> fn) const {
+  if (this->is_empty())
+    throw std::length_error("Array is empty, try to add elements!");
+
+  DynamicArray<T> result(this->capacity);
+  for (int i = 0; i < this->size; i++) {
+    T value = fn(this->array[i]);
+    result.push_back(value);
+  }
+
+  return result;
+}
+
+// Reduce
+template <typename T>
+T DynamicArray<T>::reduce(T init, std::function<T(T, T)> fn) const {
+  if (this->is_empty())
+    throw std::length_error("Array is empty, try to add elements!");
+
+  for (int i = 0; i < this->size; i++)
+    init = fn(init, this->array[i]);
+
+  return init;
+}
+
+// Reverse array (modify the existing)
+template <typename T> void DynamicArray<T>::reverse() {
+  if (this->is_empty())
+    throw std::length_error("Array is empty, try to add elements!");
+
+  int i = 0, j = this->size - 1;
+  while (i < j) {
+    std::swap(this->array[i], this->array[j]);
+    i++;
+    j--;
+  }
+}
+
+// Reverse array (creating new array)
+template <typename T> DynamicArray<T> DynamicArray<T>::reversed() const {
+  if (this->is_empty())
+    throw std::length_error("Array is empty, try to add elements!");
+
+  DynamicArray<T> result(this->capacity);
+  for (int i = 0; i < this->size; i++)
+    result.push_begin(this->array[i]);
+
+  return result;
+}
+
+// Reverse partial (modify the existing)
+template <typename T>
+void DynamicArray<T>::reverse_partial(const Iterator<T> it1,
+                                      const Iterator<T> it2) {
+  if (this->is_empty())
+    throw std::length_error("Array is empty, try to add elements!");
+
+  if (it1 >= it2)
+    throw std::invalid_argument("1st iterator must be less than 2nd iterator!");
+
+  while (it1 < it2) {
+    std::swap(*it1, *it2);
+    ++it1;
+    --it2;
+  }
+}
+
+// Remove duplicates from array
+template <typename T>
+DynamicArray<T> DynamicArray<T>::remove_duplicates() const {
+  if (this->is_empty())
+    throw std::length_error("Array is empty, try to add elements!");
+
+  DynamicArray<T> result(this->capacity);
+  std::unordered_set<T> seen;
+  for (int i = 0; i < this->size; i++) {
+    if (seen.find(this->array[i]) == seen.end()) {
+      seen.insert(this->array[i]);
+      result.push_back(this->array[i]);
+    }
+  }
+
+  return result;
 }
 
 #endif

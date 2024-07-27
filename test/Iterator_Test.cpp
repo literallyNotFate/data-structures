@@ -74,6 +74,15 @@ TEST(IteratorMethods, IncrementOperator) {
   EXPECT_EQ(it.get_index(), 1) << "Should be at 2nd element!";
 }
 
+TEST(IteratorMethods, DecrementOperator) {
+  int size = 3;
+  int *int_array = new int[size]{1, 2, 3};
+  Iterator<int> it(int_array, size, size);
+  --it;
+
+  EXPECT_EQ(it.get_index(), 2) << "Should be at 2nd element!";
+}
+
 TEST(IteratorMethods, DereferenceOperator) {
   int size = 6;
   int *int_array = new int[size]{1, 2, 3, 4, 5, 6};
@@ -133,6 +142,7 @@ TEST(IteratorOperators, LessThan) {
   Iterator<int> it2(int_array, size, 3);
 
   EXPECT_TRUE(it1 < it2) << "Iterator it1 should be less than it2!";
+  EXPECT_TRUE(it1 <= it2) << "Iterator it1 should be less or equal than it2!";
 }
 
 TEST(IteratorTest, GreaterThan) {
@@ -142,4 +152,6 @@ TEST(IteratorTest, GreaterThan) {
   Iterator<int> it2(int_array, size, 2);
 
   EXPECT_TRUE(it1 > it2) << "Iterator it1 should be greater than it2!";
+  EXPECT_TRUE(it1 >= it2)
+      << "Iterator it1 should be greater or equal than it2!";
 }
