@@ -1009,3 +1009,116 @@ TEST(DynamicArrayMinMax, Max) {
                std::length_error)
       << "Should throw length_error if array is empty!";
 }
+
+// ----------
+// Sorting test
+// ----------
+
+TEST(DynamicArraySorting, BubbleSort) {
+  std::vector<int> vec1{6, 4, 8, 12, 5, 5, -1, 0, 5, 2, 1};
+  DynamicArray<int> d1(vec1);
+
+  d1.bubble_sort();
+  std::vector<int> expected1{-1, 0, 1, 2, 4, 5, 5, 5, 6, 8, 12};
+
+  for (int i = 0; i < d1.get_size(); i++)
+    EXPECT_EQ(d1[i], expected1[i])
+        << "Array must be sorted in ascending order!";
+
+  std::vector<int> vec2{12, 5, 15, 20, 30, 43, 100, 20, -12, -20};
+  DynamicArray<int> d2(vec2);
+
+  d2.bubble_sort([](int x, int y) { return x > y; });
+  std::vector<int> expected2{100, 43, 30, 20, 20, 15, 12, 5, -12, -20};
+
+  for (int i = 0; i < d2.get_size(); i++)
+    EXPECT_EQ(d2[i], expected2[i])
+        << "Array must be sorted in descending order!";
+
+  d2.erase_range(d2.begin(), d2.end());
+  EXPECT_THROW(d2.bubble_sort(), std::length_error)
+      << "Should throw length_error if array is empty!";
+}
+
+TEST(DynamicArraySorting, SelectionSort) {
+  std::vector<std::string> vec{"abc", "hello", "123456", "world", "A", "hi"};
+  DynamicArray<std::string> d1(vec);
+
+  d1.selection_sort(
+      [](std::string x, std::string y) { return x.size() < y.size(); });
+  std::vector<std::string> expected1{"A",     "hi",    "abc",
+                                     "world", "hello", "123456"};
+
+  for (int i = 0; i < d1.get_size(); i++)
+    EXPECT_EQ(d1[i], expected1[i])
+        << "Array must be sorted by strings size in ascending order!";
+
+  DynamicArray<std::string> d2(vec);
+  d2.selection_sort(
+      [](std::string x, std::string y) { return x.size() > y.size(); });
+
+  std::vector<std::string> expected2{"123456", "hello", "world",
+                                     "abc",    "hi",    "A"};
+
+  for (int i = 0; i < d2.get_size(); i++)
+    EXPECT_EQ(d2[i], expected2[i])
+        << "Array must be sorted in descending order!";
+
+  d2.erase_range(d2.begin(), d2.end());
+  EXPECT_THROW(d2.selection_sort(), std::length_error)
+      << "Should throw length_error if array is empty!";
+}
+
+TEST(DynamicArraySorting, MergeSort) {
+  class Person {
+  public:
+    const char *name;
+    int age;
+
+    Person() : name("Default"), age(0) {};
+    Person(const char *name, int age) : name(name), age(age) {};
+
+    inline bool operator<(const Person &other) const {
+      return this->age < other.age;
+    }
+    inline bool operator>(const Person &other) const {
+      return this->age > other.age;
+    }
+  };
+
+  std::vector<Person> vec{Person("Jake", 20), Person("Mark", 18),
+                          Person("Rick", 16), Person("Kyle", 22),
+                          Person("Joe", 27)};
+
+  DynamicArray<Person> d1(vec);
+  d1.merge_sort();
+
+  std::vector<Person> expected1{Person("Rick", 16), Person("Mark", 18),
+                                Person("Jake", 20), Person("Kyle", 22),
+                                Person("Joe", 27)};
+
+  for (int i = 0; i < d1.get_size(); i++) {
+    EXPECT_EQ((std::string)d1[i].name, (std::string)expected1[i].name)
+        << "Names should be equal after sorting in ascending order!";
+    EXPECT_EQ(d1[i].age, expected1[i].age)
+        << "Ages should be equal after sorting in ascending order!";
+  }
+
+  DynamicArray<Person> d2(vec);
+  d2.merge_sort(std::greater<Person>());
+
+  std::vector<Person> expected2{Person("Joe", 27), Person("Kyle", 22),
+                                Person("Jake", 20), Person("Mark", 18),
+                                Person("Rick", 16)};
+
+  for (int i = 0; i < d2.get_size(); i++) {
+    EXPECT_EQ((std::string)d2[i].name, (std::string)expected2[i].name)
+        << "Names should be equal after sorting in descending order!";
+    EXPECT_EQ(d2[i].age, expected2[i].age)
+        << "Ages should be equal after sorting in descending order!";
+  }
+
+  d2.erase_range(d2.begin(), d2.end());
+  EXPECT_THROW(d2.merge_sort(), std::length_error)
+      << "Should throw length_error if array is empty!";
+}

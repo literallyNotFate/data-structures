@@ -22,6 +22,10 @@ private:
   int size;
   int capacity;
 
+  // merge sort helper functions
+  void merge_sort_helper(int left, int right, std::function<bool(T, T)> comp);
+  void merge(int left, int mid, int right, std::function<bool(T, T)> comp);
+
 public:
   // constructors
   inline explicit DynamicArray<T>() : array(nullptr), size(0), capacity(0){};
@@ -118,6 +122,11 @@ public:
   T max(std::function<int(T)> fn) const;
   T min() const;
   T min(std::function<int(T)> fn) const;
+
+  // sorting
+  void bubble_sort(std::function<bool(T, T)> comp = std::less<T>());
+  void selection_sort(std::function<bool(T, T)> comp = std::less<T>());
+  void merge_sort(std::function<bool(T, T)> comp = std::less<T>());
 
   // iterators
   inline Iterator<T> begin() const {
@@ -744,6 +753,104 @@ template <typename T> T DynamicArray<T>::min(std::function<int(T)> fn) const {
   }
 
   return min;
+}
+
+//----------
+// Sorting
+// ----------
+
+// Bubble sort
+template <typename T>
+void DynamicArray<T>::bubble_sort(std::function<bool(T, T)> comp) {
+  if (this->is_empty())
+    throw std::length_error("Array is empty, try to add elements!");
+
+  for (int i = 0; i < this->size - 1; i++) {
+    for (int j = 0; j < this->size - i - 1; j++) {
+      if (comp(this->array[j + 1], this->array[j]))
+        std::swap(this->array[j], this->array[j + 1]);
+    }
+  }
+}
+
+// Selection sort
+template <typename T>
+void DynamicArray<T>::selection_sort(std::function<bool(T, T)> comp) {
+  if (this->is_empty())
+    throw std::length_error("Array is empty, try to add elements!");
+
+  for (int i = 0; i < this->size - 1; i++) {
+    int min_index = i;
+    for (int j = i + 1; j < this->size; j++) {
+      if (comp(this->array[j], this->array[min_index]))
+        min_index = j;
+    }
+
+    std::swap(this->array[i], this->array[min_index]);
+  }
+}
+
+// Merge sort
+template <typename T>
+void DynamicArray<T>::merge_sort(std::function<bool(T, T)> comp) {
+  if (this->is_empty())
+    throw std::length_error("Array is empty, try to add elements!");
+
+  merge_sort_helper(0, this->size - 1, comp);
+}
+
+// Merge sort helper function
+template <typename T>
+void DynamicArray<T>::merge_sort_helper(int left, int right,
+                                        std::function<bool(T, T)> comp) {
+  if (left < right) {
+    int mid = left + (right - left) / 2;
+    merge_sort_helper(left, mid, comp);
+    merge_sort_helper(mid + 1, right, comp);
+    merge(left, mid, right, comp);
+  }
+}
+
+template <typename T>
+void DynamicArray<T>::merge(int left, int mid, int right,
+                            std::function<bool(T, T)> comp) {
+  int n1 = mid - left + 1;
+  int n2 = right - mid;
+  T *L = new T[n1];
+  T *R = new T[n2];
+
+  for (int i = 0; i < n1; i++)
+    L[i] = this->array[left + i];
+  for (int j = 0; j < n2; j++)
+    R[j] = this->array[mid + 1 + j];
+
+  int i = 0, j = 0, k = left;
+  while (i < n1 && j < n2) {
+    if (comp(L[i], R[j])) {
+      this->array[k] = L[i];
+      i++;
+    } else {
+      this->array[k] = R[j];
+      j++;
+    }
+
+    k++;
+  }
+
+  while (i < n1) {
+    this->array[k] = L[i];
+    i++;
+    k++;
+  }
+
+  while (j < n2) {
+    this->array[k] = R[j];
+    j++;
+    k++;
+  }
+
+  delete[] L;
+  delete[] R;
 }
 
 #endif
