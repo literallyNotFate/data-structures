@@ -8,6 +8,7 @@
 #include <ctime>
 #include <functional>
 #include <iostream>
+#include <map>
 #include <sstream>
 #include <stdexcept>
 #include <unordered_set>
@@ -110,6 +111,13 @@ public:
   DynamicArray<T> reversed_partial(const Iterator<T> it1,
                                    const Iterator<T> it2) const;
   DynamicArray<T> remove_duplicates() const;
+  std::map<T, int> frequency_map() const;
+
+  // min/max find
+  T max() const;
+  T max(std::function<int(T)> fn) const;
+  T min() const;
+  T min(std::function<int(T)> fn) const;
 
   // iterators
   inline Iterator<T> begin() const {
@@ -509,6 +517,10 @@ void DynamicArray<T>::replace_if(std::function<bool(T)> fn, const T &replace) {
     *it = replace;
 }
 
+//----------
+// Useful functions
+// ----------
+
 // To string
 template <typename T> const std::string DynamicArray<T>::to_string() const {
   std::stringstream ss;
@@ -636,10 +648,11 @@ void DynamicArray<T>::reverse_partial(const Iterator<T> it1,
   if (it1 >= it2)
     throw std::invalid_argument("1st iterator must be less than 2nd iterator!");
 
-  while (it1 < it2) {
-    std::swap(*it1, *it2);
-    ++it1;
-    --it2;
+  Iterator<T> begin = it1, end = it2;
+  while (begin < end) {
+    std::swap(*begin, *end);
+    ++begin;
+    --end;
   }
 }
 
@@ -659,6 +672,78 @@ DynamicArray<T> DynamicArray<T>::remove_duplicates() const {
   }
 
   return result;
+}
+
+// Get frequency map of dynamic array
+template <typename T> std::map<T, int> DynamicArray<T>::frequency_map() const {
+  if (this->is_empty())
+    throw std::length_error("Array is empty, try to add elements!");
+
+  std::map<T, int> fm;
+  for (int i = 0; i < this->size; i++)
+    fm[this->array[i]]++;
+
+  return fm;
+}
+
+//----------
+// Min/max
+// ----------
+
+// Find max element
+template <typename T> T DynamicArray<T>::max() const {
+  if (this->is_empty())
+    throw std::length_error("Array is empty, try to add elements!");
+
+  T max = this->array[0];
+  for (int i = 0; i < this->size; i++) {
+    if (max < this->array[i])
+      max = this->array[i];
+  }
+
+  return max;
+}
+
+// Find max by key
+template <typename T> T DynamicArray<T>::max(std::function<int(T)> fn) const {
+  if (this->is_empty())
+    throw std::length_error("Array is empty, try to add elements!");
+
+  T max = this->array[0];
+  for (int i = 0; i < this->size; i++) {
+    if (fn(max) < fn(this->array[i]))
+      max = this->array[i];
+  }
+
+  return max;
+}
+
+// Find min element
+template <typename T> T DynamicArray<T>::min() const {
+  if (this->is_empty())
+    throw std::length_error("Array is empty, try to add elements!");
+
+  T min = this->array[0];
+  for (int i = 0; i < this->size; i++) {
+    if (min > this->array[i])
+      min = this->array[i];
+  }
+
+  return min;
+}
+
+// Find min element by key
+template <typename T> T DynamicArray<T>::min(std::function<int(T)> fn) const {
+  if (this->is_empty())
+    throw std::length_error("Array is empty, try to add elements!");
+
+  T min = this->array[0];
+  for (int i = 0; i < this->size; i++) {
+    if (fn(min) > fn(this->array[i]))
+      min = this->array[i];
+  }
+
+  return min;
 }
 
 #endif

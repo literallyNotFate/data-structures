@@ -931,3 +931,81 @@ TEST(DynamicArrayUsefulFunctions, RemoveDuplicates) {
   EXPECT_THROW(d = d.remove_duplicates(), std::length_error)
       << "Should throw length_error if array is empty!";
 }
+
+TEST(DynamicArrayUsefulFunctions, FrequencyMap) {
+  std::vector<int> vec{1, 2, 1, 2, 3, 4, 1, 5, 6, 7, 7, 8, 9, 9};
+  DynamicArray<int> d(vec);
+
+  std::map<int, int> freq = d.frequency_map();
+  std::map<int, int> expected = {{1, 3}, {2, 2}, {3, 1}, {4, 1}, {5, 1},
+                                 {6, 1}, {7, 2}, {8, 1}, {9, 2}};
+
+  EXPECT_EQ(freq.size(), expected.size())
+      << "Sizes of frequency map and expected should be equal!";
+
+  for (std::map<int, int>::iterator it1 = freq.begin(), it2 = expected.begin();
+       it1 != freq.end(); ++it1, ++it2) {
+    EXPECT_EQ(it1->first, it2->first) << "Keys/numbers should be equal!";
+    EXPECT_EQ(it1->second, it2->second) << "Count numbers should be equal!";
+  }
+
+  d.erase_range(d.begin(), d.end());
+  EXPECT_THROW(d.frequency_map(), std::length_error)
+      << "Should throw length_error if array is empty!";
+}
+
+// ----------
+// Finding min/max test
+// ----------
+
+TEST(DynamicArrayMinMax, Min) {
+  std::vector<int> vec1{1, 2, 3, -10, 5};
+  DynamicArray<int> d1(vec1);
+
+  int min = d1.min(), expected = -10;
+  EXPECT_EQ(min, expected) << "Values of min and expected min should be equal!";
+
+  d1.erase_range(d1.begin(), d1.end());
+  EXPECT_THROW(d1.min(), std::length_error)
+      << "Should throw length_error if array is empty!";
+
+  std::vector<std::string> vec2{"abc", "hello", "world", "hi",
+                                "g",   "1234",  "14"};
+  DynamicArray<std::string> d2(vec2);
+  std::string min_size = d2.min([](std::string str) { return str.size(); }),
+              min_expected = "g";
+
+  EXPECT_EQ(min_size, min_expected)
+      << "Values of min and expected min should be equal!";
+
+  d2.erase_range(d2.begin(), d2.end());
+  EXPECT_THROW(d2.min([](std::string str) { return str.size(); }),
+               std::length_error)
+      << "Should throw length_error if array is empty!";
+}
+
+TEST(DynamicArrayMinMax, Max) {
+  std::vector<int> vec1{1, 2, 3, -10, 5};
+  DynamicArray<int> d1(vec1);
+
+  int min = d1.max(), expected = 5;
+  EXPECT_EQ(min, expected) << "Values of max and expected max should be equal!";
+
+  d1.erase_range(d1.begin(), d1.end());
+  EXPECT_THROW(d1.max(), std::length_error)
+      << "Should throw length_error if array is empty!";
+
+  std::vector<std::string> vec2{"abc", "hello", "world", "hi",
+                                "g",   "1234",  "14"};
+  DynamicArray<std::string> d2(vec2);
+  std::string max_size = d2.max([](std::string str) { return str.size(); }),
+              max_expected = "hello";
+
+  EXPECT_EQ(max_size, max_expected)
+      << "Values of max and expected max should be equal!";
+
+  d2.erase_range(d2.begin(), d2.end());
+  EXPECT_THROW(d2.max([](std::string str) { return str.size(); }),
+               std::length_error)
+      << "Should throw length_error if array is empty!";
+}
