@@ -128,6 +128,13 @@ public:
   void selection_sort(std::function<bool(T, T)> comp = std::less<T>());
   void merge_sort(std::function<bool(T, T)> comp = std::less<T>());
 
+  // union
+  DynamicArray<T> operator|(const DynamicArray<T> &other) const;
+  // intersect
+  DynamicArray<T> operator&(const DynamicArray<T> &other) const;
+  // merge
+  DynamicArray<T> operator+(const DynamicArray<T> &other) const;
+
   // iterators
   inline Iterator<T> begin() const {
     return Iterator<T>(this->array, this->size);
@@ -851,6 +858,81 @@ void DynamicArray<T>::merge(int left, int mid, int right,
 
   delete[] L;
   delete[] R;
+}
+
+//----------
+// Set operations
+// ----------
+
+// Union of two arrays
+template <typename T>
+DynamicArray<T> DynamicArray<T>::operator|(const DynamicArray<T> &other) const {
+  if (this->is_empty() || other.is_empty())
+    throw std::length_error("One of arrays is empty!");
+
+  DynamicArray<T> result(this->capacity + other.get_capacity());
+  std::unordered_set<T> seen;
+
+  for (int i = 0; i < this->size; i++) {
+    if (seen.find(this->array[i]) == seen.end()) {
+      seen.insert(this->array[i]);
+      result.push_back(this->array[i]);
+    }
+  }
+
+  for (int i = 0; i < other.get_size(); i++) {
+    if (seen.find(other[i]) == seen.end()) {
+      seen.insert(other[i]);
+      result.push_back(other[i]);
+    }
+  }
+
+  std::cout << "Result: " << std::endl;
+  for (int i = 0; i < result.get_size(); i++)
+    std::cout << result[i] << " ";
+
+  std::cout << "\n\n";
+
+  return result;
+}
+
+// Intersection of two arrays
+template <typename T>
+DynamicArray<T> DynamicArray<T>::operator&(const DynamicArray<T> &other) const {
+  if (this->is_empty() || other.is_empty())
+    throw std::length_error("One of arrays is empty!");
+
+  DynamicArray<T> result(this->size);
+  std::unordered_set<T> seen;
+  std::unordered_set<T> result_set;
+
+  for (int i = 0; i < this->size; i++)
+    seen.insert(this->array[i]);
+
+  for (int i = 0; i < other.get_size(); i++) {
+    if (seen.find(other[i]) != seen.end() &&
+        result_set.find(other[i]) == result_set.end()) {
+      result.push_back(other[i]);
+      result_set.insert(other[i]);
+    }
+  }
+
+  return result;
+}
+
+// Merge two arrays
+template <typename T>
+DynamicArray<T> DynamicArray<T>::operator+(const DynamicArray<T> &other) const {
+  if (this->is_empty() || other.is_empty())
+    throw std::length_error("One of arrays is empty!");
+
+  DynamicArray<T> result(*this);
+  result.resize(result.get_size() + other.get_size());
+
+  for (int i = 0; i < other.get_size(); i++)
+    result.push_back(other[i]);
+
+  return result;
 }
 
 #endif

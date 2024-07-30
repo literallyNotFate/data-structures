@@ -1,6 +1,5 @@
 #include <DynamicArray.h>
 #include <Iterator.h>
-
 #include <gtest/gtest.h>
 
 #include <cctype>
@@ -1121,4 +1120,69 @@ TEST(DynamicArraySorting, MergeSort) {
   d2.erase_range(d2.begin(), d2.end());
   EXPECT_THROW(d2.merge_sort(), std::length_error)
       << "Should throw length_error if array is empty!";
+}
+
+// ----------
+// Set operations
+// ----------
+
+TEST(DynamicArraySetOperations, Merge) {
+  DynamicArray<int> d1(3, 0), d2(5, 1);
+
+  DynamicArray<int> result = d1 + d2;
+  std::vector<int> expected{0, 0, 0, 1, 1, 1, 1, 1};
+
+  EXPECT_EQ(result.get_size(), expected.size())
+      << "New size should be: d1.size() + d2.size().";
+
+  for (int i = 0; i < result.get_size(); i++)
+    EXPECT_EQ(result[i], expected[i]) << "Value should be equal!";
+
+  d1.erase_range(d1.begin(), d1.end());
+  EXPECT_THROW(DynamicArray<int> res = d1 + d2, std::length_error)
+      << "Should throw length_error if one of the arrays is empty!";
+
+  d2.erase_range(d2.begin(), d2.end());
+  EXPECT_THROW(DynamicArray<int> res = d1 + d2, std::length_error)
+      << "Should throw length_error if one of the arrays is empty!";
+}
+
+TEST(DynamicArraySetOperations, Union) {
+  std::vector<int> vec1{1, 2, 2, 3, 3};
+  std::vector<int> vec2{1, 2, 3, 4, 3, 2};
+
+  DynamicArray<int> d1(vec1), d2(vec2);
+  DynamicArray<int> result = d1 | d2;
+
+  std::vector<int> expected{1, 2, 3, 4};
+  for (int i = 0; i < result.get_size(); i++)
+    EXPECT_EQ(result[i], expected[i]) << "Values should be equal!";
+
+  d1.erase_range(d1.begin(), d1.end());
+  EXPECT_THROW(DynamicArray<int> res = d1 | d2, std::length_error)
+      << "Should throw length_error if one of the arrays is empty!";
+
+  d2.erase_range(d2.begin(), d2.end());
+  EXPECT_THROW(DynamicArray<int> res = d1 | d2, std::length_error)
+      << "Should throw length_error if one of the arrays is empty!";
+}
+
+TEST(DynamicArraySetOperations, Intersection) {
+  std::vector<int> vec1{1, 2, 2, 3, 3};
+  std::vector<int> vec2{1, 2, 3, 4, 3, 2};
+
+  DynamicArray<int> d1(vec1), d2(vec2);
+  DynamicArray<int> result = d1 & d2;
+
+  std::vector<int> expected{1, 2, 3};
+  for (int i = 0; i < result.get_size(); i++)
+    EXPECT_EQ(result[i], expected[i]) << "Values should be equal!";
+
+  d1.erase_range(d1.begin(), d1.end());
+  EXPECT_THROW(DynamicArray<int> res = d1 & d2, std::length_error)
+      << "Should throw length_error if one of the arrays is empty!";
+
+  d2.erase_range(d2.begin(), d2.end());
+  EXPECT_THROW(DynamicArray<int> res = d1 & d2, std::length_error)
+      << "Should throw length_error if one of the arrays is empty!";
 }
