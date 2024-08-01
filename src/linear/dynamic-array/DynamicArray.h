@@ -36,6 +36,7 @@ public:
   DynamicArray<T>(const int &size, const T &value);
   DynamicArray<T>(const int &size, T *arr);
   DynamicArray<T>(const std::vector<T> &vec);
+  template <typename Iterator> DynamicArray<T>(Iterator begin, Iterator end);
   DynamicArray<T>(const DynamicArray<T> &other);
 
   // specified constructors
@@ -178,6 +179,22 @@ DynamicArray<T>::DynamicArray(const std::vector<T> &vec)
   this->array = new T[vec.size()];
   for (int i = 0; i < this->size; i++)
     this->array[i] = vec[i];
+}
+
+// Based on range vector iterator constructor
+template <typename T>
+template <typename Iterator>
+DynamicArray<T>::DynamicArray(Iterator begin, Iterator end) {
+  if (begin >= end)
+    throw std::invalid_argument(
+        "The first iterator must be less than the second iterator!");
+
+  this->size = this->capacity = std::distance(begin, end);
+  this->array = new T[this->size];
+
+  int i = 0;
+  for (Iterator it = begin; it != end; ++it, ++i)
+    this->array[i] = *it;
 }
 
 // Copy constructor (deep copy)
@@ -327,6 +344,9 @@ template <typename T> bool DynamicArray<T>::contains(const T &value) const {
 
 // Get element by index from array
 template <typename T> T DynamicArray<T>::at(const int &index) const {
+  if (this->is_empty())
+    throw std::length_error("Array is empty, try to add elements!");
+
   if (index < 0 || index >= this->size)
     throw std::out_of_range("Provided index is out of range!");
 

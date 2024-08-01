@@ -70,6 +70,25 @@ TEST(DynamicArrayConstructors, VectorBasedConstructor) {
         << "Should be equal to each other (" << d[i] << " = " << vec[i] << ").";
 }
 
+TEST(DynamicArrayConstructors, RangeBasedConstructor) {
+  std::vector<int> vec{1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+  DynamicArray<int> d(vec.begin(), vec.end());
+
+  EXPECT_EQ(d.get_size(), vec.size())
+      << "Dynamic array size should be based vector size: " << vec.size();
+  EXPECT_EQ(d.get_capacity(), vec.size())
+      << "Dynamic array capacity should be based vector size: " << vec.size();
+
+  for (int i = 0; i < vec.size(); i++)
+    EXPECT_EQ(d[i], vec[i])
+        << "Should be equal to each other (" << d[i] << " = " << vec[i] << ").";
+
+  EXPECT_THROW(DynamicArray<int> d1(vec.end(), vec.begin()),
+               std::invalid_argument)
+      << "Should throw invalid_argument if first iterator is greater than the "
+         "second!";
+}
+
 TEST(DynamicArrayConstructor, CopyConstructor) {
   DynamicArray<int> d1(3, 0);
   DynamicArray<int> d2(d1);
@@ -238,7 +257,7 @@ TEST(DynamicArrayModify, PushBegin) {
 }
 
 TEST(DynamicArrayModify, Insert) {
-  DynamicArray<int> d(10);
+  DynamicArray<int> d(6);
 
   d.push_begin(3);
   d.push_begin(2);
@@ -260,6 +279,10 @@ TEST(DynamicArrayModify, Insert) {
   EXPECT_THROW(d.insert(index, value), std::out_of_range)
       << "Should throw out_of_range because index: " << index
       << " is out of range!";
+
+  d.push_begin(40);
+  EXPECT_THROW(d.insert(index, value), std::length_error)
+      << "Should throw length_error if array is full!";
 }
 
 TEST(DynamicArrayModify, InsertVector) {
@@ -297,13 +320,14 @@ TEST(DynamicArrayModify, EraseBack) {
 
   EXPECT_EQ(d.get_size(), size)
       << "Size should be 1 after deletion of the last element!";
-  EXPECT_FALSE(d.contains(2)) << "Deleted element should not be in the array!";
+  EXPECT_FALSE(d.contains(2)) << "Deleted element should not be in the array !";
 
   d.erase_back();
 
-  EXPECT_TRUE(d.is_empty()) << "Array must be empty after deleting everything!";
+  EXPECT_TRUE(d.is_empty())
+      << "Array must be empty after deleting everything !";
   EXPECT_THROW(d.erase_back(), std::length_error)
-      << "Should throw length_error, because there are no elements to delete!";
+      << "Should throw length_error, because there are no elements to delete !";
 }
 
 TEST(DynamicArrayModify, EraseBegin) {
@@ -318,13 +342,14 @@ TEST(DynamicArrayModify, EraseBegin) {
 
   EXPECT_EQ(d.get_size(), size)
       << "Size should be 1 after deletion of the last element!";
-  EXPECT_FALSE(d.contains(1)) << "Deleted element should not be in the array!";
+  EXPECT_FALSE(d.contains(1)) << "Deleted element should not be in the array !";
 
   d.erase_begin();
 
-  EXPECT_TRUE(d.is_empty()) << "Array must be empty after deleting everything!";
+  EXPECT_TRUE(d.is_empty())
+      << "Array must be empty after deleting everything !";
   EXPECT_THROW(d.erase_back(), std::length_error)
-      << "Should throw length_error, because there are no elements to delete!";
+      << "Should throw length_error, because there are no elements to delete !";
 }
 
 TEST(DynamicArrayModify, Erase) {
@@ -386,9 +411,9 @@ TEST(DynamicArrayModify, EraseRange) {
   EXPECT_TRUE(d.contains(*(d.end())))
       << "First element should be in array: " << *(d.end());
 
-  EXPECT_FALSE(d.contains(2)) << "Deleted element (2) should not be in array!";
-  EXPECT_FALSE(d.contains(3)) << "Deleted element (3) should not be in array!";
-  EXPECT_FALSE(d.contains(4)) << "Deleted element (4) should not be in array!";
+  EXPECT_FALSE(d.contains(2)) << "Deleted element (2) should not be in array !";
+  EXPECT_FALSE(d.contains(3)) << " Deleted element(3) should not be in array !";
+  EXPECT_FALSE(d.contains(4)) << " Deleted element(4) should not be in array !";
 }
 
 TEST(DynamicArrayModify, EraseAll) {
@@ -534,6 +559,10 @@ TEST(DynamicArrayMethods, At) {
   EXPECT_EQ(d.at(0), d[0]) << "Should return element at 0 index!";
   EXPECT_THROW(d[index], std::out_of_range)
       << "Should throw out_of_range if index is wrong. Index: " << index;
+
+  d.erase_range(d.begin(), d.end());
+  EXPECT_THROW(d[0], std::length_error)
+      << "Should throw length_error if array is empty!";
 }
 
 TEST(DynamicArrayMethods, Find) {
@@ -543,7 +572,7 @@ TEST(DynamicArrayMethods, Find) {
   Iterator<int> f = d.find(1);
   EXPECT_EQ(*f, *(d.begin())) << "Iterator should point at index 0!";
   EXPECT_EQ((d.find(5) - 1).get_index(), 3)
-      << "Should point to the previous index of the found element at the end.";
+      << "Should point to the previous index of the found element at the send.";
   EXPECT_EQ(d.find(99), d.end())
       << "Should point to the end if element was not found!";
 
