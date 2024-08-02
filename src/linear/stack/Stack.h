@@ -83,6 +83,18 @@ public:
   }
   const std::string to_string() const;
 
+  // useful methods
+  std::vector<T> top_n(const int &n) const;
+  std::vector<T> bottom_n(const int &n) const;
+  int count(const T &element) const;
+  int count_if(std::function<bool(T)> fn) const;
+
+  // min/max find
+  T max() const;
+  T max(std::function<int(T)> fn) const;
+  T min() const;
+  T min(std::function<int(T)> fn) const;
+
   // iterators
   inline Iterator<T> begin() const {
     return Iterator<T>(this->stack, this->get_size(), 0);
@@ -414,10 +426,6 @@ void Stack<T>::replace_if(std::function<bool(T)> fn, const T &replace) {
     *it = replace;
 }
 
-//----------
-// Useful functions
-// ----------
-
 // To string
 template <typename T> const std::string Stack<T>::to_string() const {
   if (this->is_empty())
@@ -436,6 +444,139 @@ template <typename T> const std::string Stack<T>::to_string() const {
   }
 
   return ss.str();
+}
+
+//----------
+// Useful functions
+// ----------
+
+// Top n elements from the stack
+template <typename T> std::vector<T> Stack<T>::top_n(const int &n) const {
+  if (this->is_empty())
+    throw std::underflow_error("Stack underflow!");
+
+  if (n < 0)
+    throw std::invalid_argument("n should not be < 0!");
+
+  if (n > (this->top + 1))
+    throw std::invalid_argument("Provided n is out of range!");
+
+  Stack<T> st(*this);
+  std::vector<T> result;
+  int count = 0;
+
+  while (count < n) {
+    result.push_back(st.peek());
+    st.pop();
+    count++;
+  }
+
+  return result;
+}
+
+// Bottom n elements from the stack
+template <typename T> std::vector<T> Stack<T>::bottom_n(const int &n) const {
+  if (this->is_empty())
+    throw std::underflow_error("Stack underflow!");
+
+  if (n < 0)
+    throw std::invalid_argument("n should not be < 0!");
+
+  if (n > (this->top + 1))
+    throw std::invalid_argument("Provided n is out of range!");
+
+  std::vector<T> result;
+  int count = 0, index = 0;
+
+  while (count < n) {
+    result.push_back(this->at(index));
+    index++;
+    count++;
+  }
+
+  return result;
+}
+
+// Count elements in the stack
+template <typename T> int Stack<T>::count(const T &element) const {
+  int count = 0;
+  for (int i = 0; i < this->get_size(); i++) {
+    if (this->stack[i] == element)
+      count++;
+  }
+
+  return count;
+}
+
+// Count elements by the key/predicate
+template <typename T> int Stack<T>::count_if(std::function<bool(T)> fn) const {
+  int count = 0;
+  for (int i = 0; i < this->get_size(); i++) {
+    if (fn(this->stack[i]))
+      count++;
+  }
+
+  return count;
+}
+
+//----------
+// Min/max
+// ----------
+
+// Find max element
+template <typename T> T Stack<T>::max() const {
+  if (this->is_empty())
+    throw std::underflow_error("Stack underflow!");
+
+  T max = this->stack[0];
+  for (int i = 0; i < this->get_size(); i++) {
+    if (max < this->stack[i])
+      max = this->stack[i];
+  }
+
+  return max;
+}
+
+// Find max by key
+template <typename T> T Stack<T>::max(std::function<int(T)> fn) const {
+  if (this->is_empty())
+    throw std::underflow_error("Stack underflow!");
+
+  T max = this->stack[0];
+  for (int i = 0; i < this->get_size(); i++) {
+    if (fn(max) < fn(this->stack[i]))
+      max = this->stack[i];
+  }
+
+  return max;
+}
+
+// Find min element
+template <typename T> T Stack<T>::min() const {
+  if (this->is_empty())
+    throw std::underflow_error("Stack underflow!");
+
+  T min = this->stack[0];
+  for (int i = 0; i < this->get_size(); i++) {
+    if (min > this->stack[i])
+      min = this->stack[i];
+  }
+
+  return min;
+}
+
+// Find min element by key
+template <typename T> T Stack<T>::min(std::function<int(T)> fn) const {
+  if (this->is_empty())
+    throw std::underflow_error("Stack underlow!");
+
+  T min = this->stack[0];
+  for (int i = 0; i < this->get_size(); i++) {
+    if (fn(min) > fn(this->stack[i]))
+      min = this->stack[i];
+  }
+
+  return min;
 }
 
 #endif

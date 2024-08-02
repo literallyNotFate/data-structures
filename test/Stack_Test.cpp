@@ -593,3 +593,121 @@ TEST(StackMethods, ReplaceAll) {
   EXPECT_THROW(s.replace_all(el, 'n'), std::underflow_error)
       << "Should throw underflow_error if stack is empty!";
 }
+
+TEST(StackUsefulFunctions, TopN) {
+  std::vector<int> vec{1, 2, 3, 4, 5, 6};
+  Stack<int> s(vec);
+
+  int top = 3;
+  std::vector<int> top_n = s.top_n(top);
+  std::vector<int> expected = {6, 5, 4};
+
+  for (int i = 0; i < top_n.size(); i++)
+    EXPECT_EQ(top_n[i], expected[i])
+        << "Values of the top and expected should be equal!";
+
+  top = -2;
+  EXPECT_THROW(s.top_n(top), std::invalid_argument)
+      << "Should throw invalid_argument if n < 0!";
+
+  top = 99;
+  EXPECT_THROW(s.top_n(top), std::invalid_argument)
+      << "Should throw invalid_argument if n > size of the stack!";
+
+  s.erase_range(s.begin(), s.end());
+  EXPECT_THROW(s.top_n(top), std::underflow_error)
+      << "Should throw underflow_error if stack is empty!";
+}
+
+TEST(StackUsefulFunctions, BottomN) {
+  std::vector<int> vec{1, 2, 3, 4, 5, 6};
+  Stack<int> s(vec);
+
+  int bottom = 3;
+  std::vector<int> bottom_n = s.bottom_n(bottom);
+  std::vector<int> expected = {1, 2, 3};
+
+  for (int i = 0; i < bottom_n.size(); i++)
+    EXPECT_EQ(bottom_n[i], expected[i])
+        << "Values of the bottom and expected should be equal!";
+
+  bottom = -2;
+  EXPECT_THROW(s.bottom_n(bottom), std::invalid_argument)
+      << "Should throw invalid_argument if n < 0!";
+
+  bottom = 99;
+  EXPECT_THROW(s.bottom_n(bottom), std::invalid_argument)
+      << "Should throw invalid_argument if n > size of the stack!";
+
+  s.erase_range(s.begin(), s.end());
+  EXPECT_THROW(s.bottom_n(bottom), std::underflow_error)
+      << "Should throw underflow_error if stack is empty!";
+}
+
+TEST(StackUsefulFunctions, Count) {
+  std::vector<char> vec{'a', 'b', 'c', 'd', 'd'};
+  Stack<char> s(vec);
+
+  int count = s.count('d');
+  EXPECT_EQ(count, 2) << "'d' should encounter 2 times!";
+
+  count = s.count('x');
+  EXPECT_EQ(count, 0) << "Should return 0 if nothing was found!";
+}
+
+TEST(StackUsefulFunctions, CountIf) {
+  std::vector<float> vec{10.0, 2.5, 6.3, 6.1, 12.6, 4.6, 50.1, 20.3, 11.4, 8.2};
+  Stack<float> s(vec);
+
+  int count = s.count_if([](float x) { return x > 10.0; });
+  EXPECT_EQ(count, 4) << "Elements that are > 10.0 should be 4!";
+
+  count = s.count_if([](float x) { return x < 0.0; });
+  EXPECT_EQ(count, 0) << "Should return 0 if nothing was found!";
+}
+
+TEST(StackMinMax, Min) {
+  std::vector<int> vec1{1, 2, 3, 4, 5, 10, 6, 7};
+  Stack<int> s1(vec1);
+
+  int min1 = s1.min();
+  EXPECT_EQ(min1, 1) << "Min element in the stack should be equal to 1!";
+
+  s1.erase_range(s1.begin(), s1.end());
+  EXPECT_THROW(s1.min(), std::underflow_error)
+      << "Should throw underflow_error if stack is empty!";
+
+  std::vector<std::string> vec2{"abc", "def", "hello", "hi", "yo", "world"};
+  Stack<std::string> s2(vec2);
+
+  std::string min2 = s2.min([](std::string str) { return str.size(); });
+  EXPECT_EQ(min2, "hi") << "'hi' must be the string with min length!";
+
+  s2.erase_range(s2.begin(), s2.end());
+  EXPECT_THROW(s2.min([](std::string str) { return str.size(); }),
+               std::underflow_error)
+      << "Should throw underflow_error if stack is empty!";
+}
+
+TEST(StackMinMax, Max) {
+  std::vector<int> vec1{1, 2, 3, 4, 5, 10, 6, 7};
+  Stack<int> s1(vec1);
+
+  int max1 = s1.max();
+  EXPECT_EQ(max1, 10) << "Max element in the stack should be equal to 10!";
+
+  s1.erase_range(s1.begin(), s1.end());
+  EXPECT_THROW(s1.max(), std::underflow_error)
+      << "Should throw underflow_error if stack is empty!";
+
+  std::vector<std::string> vec2{"abc", "def", "hello", "hi", "yo", "world"};
+  Stack<std::string> s2(vec2);
+
+  std::string max2 = s2.max([](std::string str) { return str.size(); });
+  EXPECT_EQ(max2, "hello") << "'hello' must be the string with max length!";
+
+  s2.erase_range(s2.begin(), s2.end());
+  EXPECT_THROW(s2.max([](std::string str) { return str.size(); }),
+               std::underflow_error)
+      << "Should throw underflow_error if stack is empty!";
+}
