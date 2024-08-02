@@ -429,7 +429,9 @@ TEST(DynamicArrayModify, EraseAll) {
   for (int i = 0; i < size; i++)
     EXPECT_EQ(d[i], new_array[i]) << "Values of arrays should be equal!";
 
-  // todo
+  d.erase_range(d.begin(), d.end());
+  EXPECT_THROW(d.erase_all(1), std::length_error)
+      << "Should throw lenghh error if array is empty!";
 }
 
 TEST(DynamicArrayModify, EraseIf) {
@@ -749,7 +751,11 @@ TEST(DynamicArrayMethods, ToString) {
 
   std::string str = d.to_string();
   std::string res = "a, b, c.";
-  EXPECT_EQ(str, res) << "String should be equal to each other!";
+  EXPECT_EQ(str, res) << "Strings should be equal to each other!";
+
+  d.erase_range(d.begin(), d.end());
+  EXPECT_THROW(str = d.to_string(), std::length_error)
+      << "Should throw length_error if array is empty!";
 }
 
 // ----------

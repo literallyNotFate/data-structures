@@ -4,6 +4,7 @@
 #include <Iterator.h>
 
 #include <iostream>
+#include <sstream>
 #include <stdexcept>
 
 // Stack
@@ -45,6 +46,7 @@ public:
   // bool methods
   inline bool is_empty() const { return this->top < 0; }
   inline bool is_full() const { return this->top >= (this->capacity - 1); }
+  bool contains(const T &value) const;
 
   // adding to stack
   void push(const T &value);
@@ -52,6 +54,8 @@ public:
 
   // deleting from stack
   T pop();
+  void erase(const Iterator<T> it);
+  void erase_range(const Iterator<T> it1, const Iterator<T> it2);
 
   // get element methods
   T peek() const;
@@ -59,6 +63,27 @@ public:
   T at(const int &index) const;
   inline T operator[](const int &index) const { return this->at(index); }
 
+  // find
+  Iterator<T> find(const T &element) const;
+  std::vector<Iterator<T>> find_all(const T &element) const;
+  std::vector<Iterator<T>> find_if(std::function<bool(T)> fn) const;
+
+  // replace
+  void replace(const T &element, const T &replace);
+  void replace(const Iterator<T> it, const T &replace);
+  void replace_all(const T &element, const T &replace);
+  void replace_if(std::function<bool(T)> fn, const T &replace);
+
+  // converting methods
+  inline const std::vector<T> to_vector() const {
+    return std::vector<T>(this->stack, this->stack + this->get_size());
+  }
+  static inline Stack<T> from_vector(const std::vector<T> &vec) {
+    return Stack<T>(vec);
+  }
+  const std::string to_string() const;
+
+  // iterators
   inline Iterator<T> begin() const {
     return Iterator<T>(this->stack, this->get_size(), 0);
   }
@@ -125,6 +150,7 @@ Stack<T>::Stack(const Stack<T> &other)
     this->stack[i] = other[i];
 }
 
+// Equal operator
 template <typename T> Stack<T> &Stack<T>::operator=(const Stack<T> &other) {
   if (this == &other)
     return *this;
@@ -249,6 +275,32 @@ template <typename T> T Stack<T>::pop() {
   return popped;
 }
 
+// Erase element by given position of iterator
+template <typename T> void Stack<T>::erase(const Iterator<T> it) {
+  if (this->is_empty())
+    throw std::underflow_error("Stack underflow!");
+
+  for (Iterator<T> it2 = it + 1; it2 != end() + 1; ++it2)
+    *(it2 - 1) = *it2;
+
+  --this->top;
+}
+
+// Erase element in give iterator range
+template <typename T>
+void Stack<T>::erase_range(const Iterator<T> it1, const Iterator<T> it2) {
+  if (this->is_empty())
+    throw std::underflow_error("Stack underflow!");
+
+  if (it1 > it2)
+    throw std::invalid_argument("1st range must be less than 2nd!");
+
+  for (Iterator<T> it = it2 + 1; it != end() + 1; ++it)
+    *(it - (it2.get_index() - it1.get_index() + 1)) = *it;
+
+  this->top -= (it2.get_index() - it1.get_index() + 1);
+}
+
 // Get top element from the stack
 template <typename T> T Stack<T>::peek() const {
   if (this->is_empty())
@@ -273,6 +325,117 @@ template <typename T> T Stack<T>::at(const int &index) const {
     throw std::out_of_range("Provided index is out of range!");
 
   return this->stack[index];
+}
+
+// Contains in stack
+template <typename T> bool Stack<T>::contains(const T &value) const {
+  Stack<T> st(*this);
+
+  while (!st.is_empty()) {
+    if (st.peek() == value)
+      return true;
+
+    st.pop();
+  }
+
+  return false;
+}
+
+// Find element in the stack
+template <typename T> Iterator<T> Stack<T>::find(const T &element) const {
+  if (this->is_empty())
+    throw std::underflow_error("Stack underflow!");
+
+  for (Iterator<T> it = begin(); it != end() + 1; ++it) {
+    if (*(it) == element)
+      return Iterator<T>(it, true);
+  }
+
+  return end();
+}
+
+// Find all occurences of an element in the stack
+template <typename T>
+std::vector<Iterator<T>> Stack<T>::find_all(const T &element) const {
+  if (this->is_empty())
+    throw std::underflow_error("Stack underflow!");
+
+  std::vector<Iterator<T>> iterators;
+  for (Iterator<T> it = begin(); it != end() + 1; ++it) {
+    if (*it == element) {
+      iterators.push_back(it);
+    }
+  }
+
+  return iterators;
+}
+
+// Find all elements that satisfy the condition/predicate
+template <typename T>
+std::vector<Iterator<T>> Stack<T>::find_if(std::function<bool(T)> fn) const {
+  if (this->is_empty())
+    throw std::underflow_error("Stack underflow!");
+
+  std::vector<Iterator<T>> iterators;
+  for (Iterator<T> it = begin(); it != end() + 1; ++it) {
+    if (fn(*it))
+      iterators.push_back(it);
+  }
+
+  return iterators;
+}
+
+// Replace first occurence of element
+template <typename T>
+void Stack<T>::replace(const T &element, const T &replace) {
+  Iterator<T> el = this->find(element);
+  if (el == end())
+    throw std::invalid_argument("Element was not found!");
+
+  *el = replace;
+}
+
+// Replace all occurrences of element
+template <typename T>
+void Stack<T>::replace_all(const T &element, const T &replace) {
+  std::vector<Iterator<T>> items = this->find_all(element);
+  if (items.size() == 0)
+    throw std::invalid_argument("Element was not found!");
+
+  for (Iterator<T> it : items)
+    *it = replace;
+}
+
+// Replace all occurrences of element that satisfy the condition
+template <typename T>
+void Stack<T>::replace_if(std::function<bool(T)> fn, const T &replace) {
+  std::vector<Iterator<T>> items = this->find_if(fn);
+  for (Iterator<T> it : items)
+    *it = replace;
+}
+
+//----------
+// Useful functions
+// ----------
+
+// To string
+template <typename T> const std::string Stack<T>::to_string() const {
+  if (this->is_empty())
+    throw std::underflow_error("Stack underflow!");
+
+  std::stringstream ss;
+  Stack<T> st(*this);
+
+  while (!st.is_empty()) {
+    ss << st.peek() << std::endl;
+    if ((st.get_size() - 1) != 0) {
+      ss << "---" << std::endl;
+    }
+
+    st.pop();
+  }
+
+  return ss.str();
 }
 
 #endif

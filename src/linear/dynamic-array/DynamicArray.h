@@ -559,6 +559,9 @@ void DynamicArray<T>::replace_if(std::function<bool(T)> fn, const T &replace) {
 
 // To string
 template <typename T> const std::string DynamicArray<T>::to_string() const {
+  if (this->is_empty())
+    throw std::length_error("Array is empty, try to add elements!");
+
   std::stringstream ss;
   for (Iterator<T> it = begin(); it != end() + 1; ++it) {
     if (it != begin())

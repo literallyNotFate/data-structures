@@ -240,6 +240,57 @@ TEST(StackModify, Insert) {
       << "Should throw overflow_error if stack is full!";
 }
 
+TEST(StackModify, Erase) {
+  Stack<int> s(10);
+  int size = 3;
+
+  s.push(1);
+  s.push(2);
+  s.push(3);
+
+  Iterator<int> it(s.get_stack(), s.get_size());
+  s.erase(it + 1);
+  --size;
+
+  EXPECT_EQ(s.get_size(), size) << "Size should be 2 after deletion!";
+
+  EXPECT_THROW(s.erase(it + 99), std::out_of_range)
+      << "Should throw out_of_range!";
+  EXPECT_THROW(s.erase(it - 99), std::out_of_range)
+      << "Should throw out_of_range!";
+
+  s.erase_range(s.begin(), s.end());
+  EXPECT_THROW(s.erase(s.begin()), std::underflow_error)
+      << "Should throw underflow_error if stack is empty!";
+}
+
+TEST(StackModify, EraseRange) {
+  Stack<int> s(10);
+  int size = 5;
+  int range = 3;
+
+  s.push(1);
+  s.push(2);
+  s.push(3);
+  s.push(4);
+  s.push(5);
+
+  Iterator<int> it(s.get_stack(), s.get_size());
+
+  EXPECT_THROW(s.erase_range(it - 99, it + 1), std::out_of_range)
+      << "Should throw out_of_range!";
+  EXPECT_THROW(s.erase_range(it + 1, it + 99), std::out_of_range)
+      << "Should throw out_of_range!";
+  EXPECT_THROW(s.erase_range(it + 2, it + 1), std::invalid_argument)
+      << "it1 should be less than it2!";
+
+  s.erase_range(it + 1, it + 3);
+  size -= range;
+
+  EXPECT_EQ(s.get_size(), size)
+      << "Size should be " << size << " after range deletion!";
+}
+
 // ----------
 // Iterators test
 // ----------
@@ -250,12 +301,6 @@ TEST(StackIterators, IteratorBegin) {
   s.push('a');
   s.push('b');
   s.push('c');
-
-  for (int i = 0; i < s.get_size(); i++) {
-    std::cout << s[i] << " ";
-  }
-
-  std::cout << std::endl << std::endl;
 
   Iterator<char> it = s.begin();
 
@@ -373,5 +418,178 @@ TEST(StackMethods, At) {
     s.pop();
 
   EXPECT_THROW(s[0], std::underflow_error)
+      << "Should throw underflow_error if stack is empty!";
+}
+
+TEST(StackMethods, ToVector) {
+  Stack<char> s(10);
+
+  s.push('a');
+  s.push('b');
+  s.push('c');
+
+  std::vector<char> svec = s.to_vector();
+  for (int i = 0; i < s.get_size(); i++)
+    EXPECT_EQ(s[i], svec[i])
+        << "Elements of stack and vector should be equal to each other!";
+}
+
+TEST(StackMethods, FromVector) {
+  std::vector<char> vec;
+
+  vec.push_back('a');
+  vec.push_back('b');
+  vec.push_back('c');
+
+  Stack<char> s = Stack<char>::from_vector(vec);
+  EXPECT_EQ(vec.size(), s.get_size())
+      << "Vector and stack sizes should be equal!";
+
+  for (int i = 0; i < s.get_size(); i++)
+    EXPECT_EQ(s[i], vec[i])
+        << "Elements of stack and vector should be equal to each other!";
+}
+
+TEST(StackMethods, ToString) {
+  Stack<char> s(10);
+
+  s.push('a');
+  s.push('b');
+  s.push('c');
+
+  std::string str = s.to_string();
+  std::string res = "c\n---\nb\n---\na\n";
+
+  EXPECT_EQ(str, res) << "Strings should be equal to each other!";
+
+  s.erase_range(s.begin(), s.end());
+  EXPECT_THROW(str = s.to_string(), std::underflow_error)
+      << "Should throw underflow_error if stack is empty!";
+}
+
+TEST(StackMethods, Contains) {
+  std::vector<std::string> vec{"abc", "hello", "world"};
+  Stack<std::string> s(vec);
+
+  std::string el = "abc";
+  EXPECT_TRUE(s.contains(el)) << "String should be in the stack!";
+
+  el = "123";
+  EXPECT_FALSE(s.contains(el)) << "String should not be in the stack!";
+}
+
+TEST(StackMethods, Find) {
+  std::vector<int> vec{1, 3, 5, 7, 9, 11};
+  Stack<int> s(vec);
+
+  int el = 1;
+  Iterator<int> it = s.find(el);
+
+  EXPECT_EQ(*it, 1) << "Should be equal to found element!";
+  EXPECT_EQ(it.get_index(), s.begin().get_index())
+      << "Iterator should point to the first element!";
+
+  el = 11;
+  it = s.find(el);
+
+  EXPECT_EQ(*(it - 1), 9) << "Should point to the previous element (9).";
+
+  el = 100;
+  it = s.find(el);
+
+  EXPECT_EQ(it.get_index(), s.end().get_index())
+      << "Should point to the end if not found!";
+
+  s.erase_range(s.begin(), s.end());
+  EXPECT_THROW(it = s.find(el), std::underflow_error)
+      << "Should throw underflow_error if stack is empty!";
+}
+
+TEST(StackMethods, FindAll) {
+  std::vector<int> vec{1, 2, 1, 3, 1, 4, 1};
+  Stack<int> s(vec);
+
+  int el = 1;
+  Iterator<int> it = s.begin();
+  std::vector<Iterator<int>> iterators = s.find_all(el);
+
+  std::vector<Iterator<int>> expected{it, it + 2, it + 4, it + 6};
+
+  for (int i = 0; i < iterators.size(); i++)
+    EXPECT_EQ(iterators[i], expected[i])
+        << "Expected iterators and result iterators should be equal!";
+
+  el = 99;
+  iterators = s.find_all(el);
+
+  EXPECT_EQ(iterators.size(), 0)
+      << "Vector size should be 0 if nothing was found!";
+
+  s.erase_range(s.begin(), s.end());
+  EXPECT_THROW(s.find_all(el), std::underflow_error)
+      << "Should throw underflow_error if stack is empty!";
+}
+
+TEST(StackMethods, FindIf) {
+  std::vector<std::string> vec{"123", "hi", "hello", "world"};
+  Stack<std::string> s(vec);
+
+  std::vector<Iterator<std::string>> iterators =
+      s.find_if([](std::string str) { return str.size() > 3; });
+  std::vector<Iterator<std::string>> expected{s.end() - 1, s.end()};
+
+  for (int i = 0; i < iterators.size(); i++)
+    EXPECT_EQ(iterators[i].get_index(), expected[i].get_index())
+        << "Expected iterators and result iterators should be equal!";
+
+  iterators = s.find_if([](std::string str) { return str.size() < 2; });
+  EXPECT_EQ(iterators.size(), 0)
+      << "Vector size should be 0 if nothing was found!";
+
+  s.erase_range(s.begin(), s.end());
+  EXPECT_THROW(s.find_if([](std::string str) { return str.size() < 2; }),
+               std::underflow_error)
+      << "Should throw underflow_error if stack is empty!";
+}
+
+TEST(StackMethods, Replace) {
+  std::vector<int> vec{1, 2, 3, 4, 5};
+  Stack<int> s(vec);
+
+  int el = 3;
+  s.replace(el, 99);
+  std::vector<int> expected{1, 2, 99, 4, 5};
+
+  for (int i = 0; i < expected.size(); i++)
+    EXPECT_EQ(s[i], expected[i])
+        << "Values of expected and result stack should be equal!";
+
+  el = 100;
+  EXPECT_THROW(s.replace(el, 50), std::invalid_argument)
+      << "Should throw invalid_argument if element was not found!";
+
+  s.erase_range(s.begin(), s.end());
+  EXPECT_THROW(s.replace(el, 50), std::underflow_error)
+      << "Should throw underflow_error if stack is empty!";
+}
+
+TEST(StackMethods, ReplaceAll) {
+  std::vector<char> vec{'a', 'b', 'b', 'c', 'd', 'b'};
+  Stack<char> s(vec);
+
+  char el = 'b';
+  s.replace_all(el, 'x');
+  std::vector<char> expected{'a', 'x', 'x', 'c', 'd', 'x'};
+
+  for (int i = 0; i < expected.size(); i++)
+    EXPECT_EQ(s[i], expected[i])
+        << "Values of expected and result stack should be equal!";
+
+  el = 'h';
+  EXPECT_THROW(s.replace_all(el, 'n'), std::invalid_argument)
+      << "Should throw invalid_argument if element was not found!";
+
+  s.erase_range(s.begin(), s.end());
+  EXPECT_THROW(s.replace_all(el, 'n'), std::underflow_error)
       << "Should throw underflow_error if stack is empty!";
 }
