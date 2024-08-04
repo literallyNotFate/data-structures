@@ -146,15 +146,12 @@ TEST(DynamicArrayConstuctor, Destructor) {
 }
 
 // ----------
-// Operator tests
+// Compare tests
 // ----------
 
-TEST(DynamicArrayOperators, GreaterThan) {
-  int *int_array1 = new int[]{1, 2, 3};
-  int *int_array2 = new int[]{4, 5, 6};
-  DynamicArray<int> d1(3, int_array1);
-  DynamicArray<int> d2(2, int_array1);
-  DynamicArray<int> d3(3, int_array2);
+TEST(DynamicArrayCompare, GreaterThan) {
+  int *int_array1 = new int[]{1, 2, 3}, *int_array2 = new int[]{4, 5, 6};
+  DynamicArray<int> d1(3, int_array1), d2(2, int_array1), d3(3, int_array2);
 
   EXPECT_TRUE(d1 > d2) << "d1 should be greater than d2 (" << d1.get_size()
                        << " > " << d2.get_size() << ").";
@@ -164,12 +161,9 @@ TEST(DynamicArrayOperators, GreaterThan) {
       << "Should return true because ALL values of d3 > ALL values of d1.";
 }
 
-TEST(DynamicArrayOperators, LessThan) {
-  int *int_array1 = new int[]{1, 2, 3};
-  int *int_array2 = new int[]{4, 5, 6};
-  DynamicArray<int> d1(3, int_array1);
-  DynamicArray<int> d2(2, int_array1);
-  DynamicArray<int> d3(3, int_array2);
+TEST(DynamicArrayCompare, LessThan) {
+  int *int_array1 = new int[]{1, 2, 3}, *int_array2 = new int[]{4, 5, 6};
+  DynamicArray<int> d1(3, int_array1), d2(2, int_array1), d3(3, int_array2);
 
   EXPECT_TRUE(d2 < d1) << "d2 should be less than d1 (" << d2.get_size()
                        << " < " << d1.get_size() << ").";
@@ -179,19 +173,15 @@ TEST(DynamicArrayOperators, LessThan) {
       << "Should return true because ALL values of d1 < ALL values of d3.";
 }
 
-TEST(DynamicArrayOperators, EqualityOperator) {
-  DynamicArray<int> d1(3, 0);
-  DynamicArray<int> d2(3, 0);
-  DynamicArray<int> d3(3, 1);
+TEST(DynamicArrayCompare, EqualityOperator) {
+  DynamicArray<int> d1(3, 0), d2(3, 0), d3(3, 1);
 
   EXPECT_TRUE(d1 == d2) << "d1 and d2 should be equal!";
   EXPECT_FALSE(d1 == d3) << "d1 and d3 should not be equal!";
 }
 
-TEST(DynamicArrayOperators, InequalityOperator) {
-  DynamicArray<int> d1(3, 0);
-  DynamicArray<int> d2(3, 0);
-  DynamicArray<int> d3(3, 1);
+TEST(DynamicArrayCompare, InequalityOperator) {
+  DynamicArray<int> d1(3, 0), d2(3, 0), d3(3, 1);
 
   EXPECT_FALSE(d1 != d2) << "d1 and d2 should not be unequal!";
   EXPECT_TRUE(d1 != d3) << "d1 and d3 should be unequal!";
@@ -518,10 +508,8 @@ TEST(DynamicArrayMethods, Resize) {
 }
 
 TEST(DynamicArrayMethods, EqualOperation) {
-  int size1 = 3;
-  int size2 = 5;
-  DynamicArray<int> d1(size1, 1);
-  DynamicArray<int> d2(size2, 0);
+  int size1 = 3, size2 = 5;
+  DynamicArray<int> d1(size1, 1), d2(size2, 0);
 
   EXPECT_EQ(d1.get_size(), size1)
       << "Old Size of the first before should be: " << size1;
@@ -542,8 +530,7 @@ TEST(DynamicArrayMethods, EqualOperation) {
 }
 
 TEST(DynamicArrayMethods, Contains) {
-  std::string s1 = "abc";
-  std::string s2 = "abs";
+  std::string s1 = "abc", s2 = "abs";
   DynamicArray<std::string> d(5, s1);
 
   EXPECT_FALSE(d.is_empty()) << "This array must not be empty!";
@@ -1183,8 +1170,7 @@ TEST(DynamicArraySetOperations, Merge) {
 }
 
 TEST(DynamicArraySetOperations, Union) {
-  std::vector<int> vec1{1, 2, 2, 3, 3};
-  std::vector<int> vec2{1, 2, 3, 4, 3, 2};
+  std::vector<int> vec1{1, 2, 2, 3, 3}, vec2{1, 2, 3, 4, 3, 2};
 
   DynamicArray<int> d1(vec1), d2(vec2);
   DynamicArray<int> result = d1 | d2;

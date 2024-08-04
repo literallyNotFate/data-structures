@@ -13,7 +13,7 @@ Pros:
     Speed (all operations in O(1))
     Universality
 
-Minuses:
+Cons:
     Inconvenience (access only through top)
     Inefficiency in some situations
     Danger of overflow

@@ -120,15 +120,12 @@ TEST(StackConstructor, Destructor) {
 }
 
 // ----------
-// Operator tests
+// Compare tests
 // ----------
 
-TEST(StackOperators, GreaterThan) {
-  int *int_array1 = new int[]{1, 2, 3};
-  int *int_array2 = new int[]{4, 5, 6};
-  Stack<int> s1(3, int_array1);
-  Stack<int> s2(2, int_array1);
-  Stack<int> s3(3, int_array2);
+TEST(StackCompare, GreaterThan) {
+  int *int_array1 = new int[]{1, 2, 3}, *int_array2 = new int[]{4, 5, 6};
+  Stack<int> s1(3, int_array1), s2(2, int_array1), s3(3, int_array2);
 
   EXPECT_TRUE(s1 > s2) << "s1 should be greater than s2 (" << s1.get_size()
                        << " > " << s2.get_size() << ").";
@@ -138,12 +135,9 @@ TEST(StackOperators, GreaterThan) {
       << "Should return true because ALL values of s3 > ALL values of s1.";
 }
 
-TEST(StackOperators, LessThan) {
-  int *int_array1 = new int[]{1, 2, 3};
-  int *int_array2 = new int[]{4, 5, 6};
-  Stack<int> s1(3, int_array1);
-  Stack<int> s2(2, int_array1);
-  Stack<int> s3(3, int_array2);
+TEST(StackCompare, LessThan) {
+  int *int_array1 = new int[]{1, 2, 3}, *int_array2 = new int[]{4, 5, 6};
+  Stack<int> s1(3, int_array1), s2(2, int_array1), s3(3, int_array2);
 
   EXPECT_TRUE(s2 < s1) << "s2 should be less than s1 (" << s2.get_size()
                        << " < " << s1.get_size() << ").";
@@ -153,19 +147,15 @@ TEST(StackOperators, LessThan) {
       << "Should return true because ALL values of s1 < ALL values of s3.";
 }
 
-TEST(StackOperators, EqualityOperator) {
-  Stack<int> s1(3, 0);
-  Stack<int> s2(3, 0);
-  Stack<int> s3(3, 1);
+TEST(StackCompare, EqualityOperator) {
+  Stack<int> s1(3, 0), s2(3, 0), s3(3, 1);
 
   EXPECT_TRUE(s1 == s2) << "s1 and s2 should be equal!";
   EXPECT_FALSE(s1 == s3) << "s1 and s3 should not be equal!";
 }
 
-TEST(StackOperators, InequalityOperator) {
-  Stack<int> s1(3, 0);
-  Stack<int> s2(3, 0);
-  Stack<int> s3(3, 1);
+TEST(StackCompare, InequalityOperator) {
+  Stack<int> s1(3, 0), s2(3, 0), s3(3, 1);
 
   EXPECT_FALSE(s1 != s2) << "s1 and s2 should not be unequal!";
   EXPECT_TRUE(s1 != s3) << "s1 and s3 should be unequal!";
@@ -266,8 +256,7 @@ TEST(StackModify, Erase) {
 
 TEST(StackModify, EraseRange) {
   Stack<int> s(10);
-  int size = 5;
-  int range = 3;
+  int size = 5, range = 3;
 
   s.push(1);
   s.push(2);
@@ -352,10 +341,8 @@ TEST(StackMethods, Resize) {
 }
 
 TEST(StackMethods, EqualOperation) {
-  int size1 = 3;
-  int size2 = 5;
-  Stack<int> s1(size1, 1);
-  Stack<int> s2(size2, 0);
+  int size1 = 3, size2 = 5;
+  Stack<int> s1(size1, 1), s2(size2, 0);
 
   EXPECT_EQ(s1.get_size(), size1)
       << "Old Size of the first before should be: " << size1;
@@ -593,6 +580,10 @@ TEST(StackMethods, ReplaceAll) {
   EXPECT_THROW(s.replace_all(el, 'n'), std::underflow_error)
       << "Should throw underflow_error if stack is empty!";
 }
+
+// ----------
+// Useful functions test
+// ----------
 
 TEST(StackUsefulFunctions, TopN) {
   std::vector<int> vec{1, 2, 3, 4, 5, 6};

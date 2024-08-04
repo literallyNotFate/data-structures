@@ -27,12 +27,14 @@ public:
   template <typename Iterator> Stack<T>(Iterator begin, Iterator end);
   Stack<T>(const Stack<T> &other);
 
-  Stack<T> &operator=(const Stack<T> &other);
-
+  // destructor
   inline ~Stack<T>() {
     delete[] this->stack;
     this->stack = nullptr;
   };
+
+  // equal operator
+  Stack<T> &operator=(const Stack<T> &other);
 
   // resize array method
   void resize(const int &new_capacity);
@@ -134,8 +136,8 @@ Stack<T>::Stack(const int &size, T *arr) : top(-1), capacity(size) {
 template <typename T>
 Stack<T>::Stack(const std::vector<T> &vec) : top(-1), capacity(vec.size()) {
   this->stack = new T[vec.size()];
-  for (int i = 0; i < vec.size(); i++)
-    this->push(vec[i]);
+  for (T element : vec)
+    this->push(element);
 }
 
 // Based on range vector iterator constructor
