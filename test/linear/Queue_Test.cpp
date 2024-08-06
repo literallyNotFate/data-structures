@@ -24,7 +24,7 @@ TEST(QueueConstructors, VectorBasedConstructor) {
       << "Queue length should be vector size!";
 
   int index = 0;
-  Node<int> *temp = q.get_head();
+  QueueNode<int> *temp = q.get_head();
   while (temp != nullptr) {
     EXPECT_EQ(temp->data, vec[index]) << "Values should be equal!";
     index++;
@@ -39,7 +39,7 @@ TEST(QueueConstructors, RangeBasedConstructor) {
   EXPECT_EQ(q.get_length(), 4) << "Size should be 4!";
 
   int index = 1;
-  Node<int> *temp = q.get_head();
+  QueueNode<int> *temp = q.get_head();
   while (temp != nullptr) {
     EXPECT_EQ(temp->data, vec[index]) << "Values should be equal!";
     index++;
@@ -60,7 +60,7 @@ TEST(QueueConstructors, CopyConstructor) {
   EXPECT_EQ(q1.get_length(), q2.get_length())
       << "Length of the queues should be equal!";
 
-  Node<std::string> *temp1 = q1.get_head(), *temp2 = q2.get_head();
+  QueueNode<std::string> *temp1 = q1.get_head(), *temp2 = q2.get_head();
   while (temp1 != nullptr && temp2 != nullptr) {
     EXPECT_EQ(temp1->data, temp2->data) << "Values should be equal!";
 
@@ -83,8 +83,8 @@ TEST(QueueConstructors, Destructor) {
   EXPECT_EQ(q.get_length(), 0)
       << "Size of the queue after clearing should be 0!";
   EXPECT_TRUE(q.is_empty()) << "Queue must be empty!";
-  EXPECT_EQ(q.get_head(), nullptr) << "Head must be pointing to the nullptr!";
-  EXPECT_EQ(q.get_tail(), nullptr) << "Tail must be pointing to the nullptr!";
+  EXPECT_EQ(q.get_head(), nullptr) << "Head must be pointing to the nullptr !";
+  EXPECT_EQ(q.get_tail(), nullptr) << " Tail must be pointing to the nullptr !";
 }
 
 // ----------
@@ -105,7 +105,7 @@ TEST(QueueModify, Enqueue) {
   EXPECT_EQ(q.get_last(), 'c') << "Last element should be equal to 'c'.";
 
   int index = 0;
-  Node<char> *temp = q.get_head();
+  QueueNode<char> *temp = q.get_head();
   while (temp != nullptr) {
     EXPECT_EQ(temp->data, expected[index]) << "Values should be equal!";
 
@@ -139,6 +139,35 @@ TEST(QueueModify, Dequeue) {
       << "Should throw length_error if queue is empty!";
 }
 
+TEST(QueueModify, EraseAll) {
+  std::vector<float> vec{1.0, 1.0, 2.0, 3.0, 2.0, 2.0, 4.5};
+  Queue<float> q(vec.begin(), vec.end());
+
+  std::vector<float> expected{1.0, 1.0, 3.0, 4.5};
+  float el = 2.0;
+
+  q.erase_all(el);
+  EXPECT_EQ(q.get_length(), expected.size())
+      << "Queue length should be equal to 4!";
+
+  int index = 0;
+  QueueNode<float> *temp = q.get_head();
+
+  while (temp != nullptr) {
+    EXPECT_EQ(temp->data, expected[index]);
+    ++index;
+    temp = temp->next;
+  }
+
+  el = 10.0;
+  EXPECT_THROW(q.erase_all(el), std::invalid_argument)
+      << "Should throw invalid_argument if element was not found!";
+
+  q.clear();
+  EXPECT_THROW(q.erase_all(el), std::length_error)
+      << "Should throw length_error if queue is empty!";
+}
+
 // ----------
 // Methods test
 // ----------
@@ -156,13 +185,21 @@ TEST(QueueMethods, EqualOperator) {
       << "Sizes of q1 and q2 must be equal!";
 
   int index = 1;
-  Node<float> *temp = q2.get_head();
+  QueueNode<float> *temp = q2.get_head();
   while (temp != nullptr) {
     EXPECT_EQ(temp->data, vec[index]) << "Values should be equal!";
 
     index++;
     temp = temp->next;
   }
+}
+
+TEST(QueueMethods, Contains) {
+  std::vector<int> vec{1, 2, 3};
+  Queue<int> q(vec);
+
+  EXPECT_TRUE(q.contains(1)) << "1 should be in the array!";
+  EXPECT_FALSE(q.contains(99)) << "99 should not be in the array!";
 }
 
 // ----------
@@ -223,5 +260,36 @@ TEST(QueueUsefulFunctions, Clear) {
       << "Size of the queue after clearing should be 0!";
   EXPECT_TRUE(q.is_empty()) << "Queue must be empty!";
   EXPECT_EQ(q.get_head(), nullptr) << "Head must be pointing to the nullptr!";
-  EXPECT_EQ(q.get_tail(), nullptr) << "Tail must be pointing to the nullptr!";
+  EXPECT_EQ(q.get_tail(), nullptr) << " Tail must be pointing to the nullptr!";
+}
+
+TEST(QueueUsefulFunctions, Swap) {
+  std::vector<int> vec1{1, 2, 3}, vec2{4, 5, 6, 7};
+  Queue<int> q1(vec1), q2(vec2);
+
+  EXPECT_EQ(q1.get_length(), vec1.size()) << "First queue should be sized 3!";
+  EXPECT_EQ(q2.get_length(), vec2.size()) << "Second queue should be sized 4!";
+
+  Queue<int>::swap(q1, q2);
+
+  EXPECT_EQ(q1.get_length(), vec2.size())
+      << "First queue after swapping should be sized 4!";
+  EXPECT_EQ(q2.get_length(), vec1.size())
+      << "Second queue after swapping should be sized 3!";
+
+  QueueNode<int> *temp = q1.get_head();
+  int index = 0;
+  while (temp != NULL) {
+    EXPECT_EQ(temp->data, vec2[index]) << "Values should be equal!";
+    index++;
+    temp = temp->next;
+  }
+
+  index = 0;
+  temp = q2.get_head();
+  while (temp != NULL) {
+    EXPECT_EQ(temp->data, vec1[index]) << "Values should be equal!";
+    index++;
+    temp = temp->next;
+  }
 }

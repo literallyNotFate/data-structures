@@ -33,12 +33,13 @@ public:
   inline int get_size() const { return this->size; }
   inline int get_index() const { return this->index; }
 
-  // increment/decrement operator
+  // increment operator
   inline Iterator<T> &operator++() {
     ++this->index;
     return *this;
   }
 
+  // decrement operator
   inline Iterator<T> &operator--() {
     --this->index;
     return *this;
@@ -52,7 +53,7 @@ public:
     return this->iter[this->index];
   }
 
-  // adding/substraction operations
+  // adding operation
   inline Iterator<T> operator+(const int &value) const {
     int new_index = this->index + value;
     if (new_index < 0 || new_index > this->size)
@@ -61,6 +62,7 @@ public:
     return Iterator<T>(this->iter, this->size, new_index);
   }
 
+  // substraction operation
   inline Iterator<T> operator-(const int &value) const {
     int new_index = this->index - value;
     if (new_index < 0 || new_index > this->size)
@@ -69,28 +71,33 @@ public:
     return Iterator<T>(this->iter, this->size, new_index);
   }
 
-  // comparing methods
+  // equals to
   inline bool operator==(const Iterator<T> &other) const {
     return this->iter == other.iter && this->index == other.index &&
            this->found == other.found;
   }
 
+  // not equals to
   inline bool operator!=(const Iterator<T> &other) const {
     return !(*this == other);
   }
 
+  // less than
   inline bool operator<(const Iterator<T> &other) const {
     return this->index < other.index;
   }
 
+  // greater than
   inline bool operator>(const Iterator<T> &other) const {
     return this->index > other.index;
   }
 
+  // less equal than
   inline bool operator<=(const Iterator<T> &other) const {
     return this->index <= other.index;
   }
 
+  // greater equal than
   inline bool operator>=(const Iterator<T> &other) const {
     return this->index >= other.index;
   }

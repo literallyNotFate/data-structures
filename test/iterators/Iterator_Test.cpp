@@ -114,10 +114,10 @@ TEST(IteratorMethods, SubtractionOperator) {
 }
 
 // ----------
-// Operators test
+// Compare test
 // ----------
 
-TEST(IteratorOperators, EqualityOperator) {
+TEST(IteratorCompare, EqualityOperator) {
   int size = 5;
   int *int_array = new int[size]{1, 2, 3, 4, 5};
   Iterator<int> it1(int_array, size, 2);
@@ -126,7 +126,7 @@ TEST(IteratorOperators, EqualityOperator) {
   EXPECT_TRUE(it1 == it2) << "Iterators it1 and it2 should be equal!";
 }
 
-TEST(IteratorOperators, InequalityOperator) {
+TEST(IteratorCompare, InequalityOperator) {
   int size = 5;
   int *int_array = new int[size]{1, 2, 3, 4, 5};
   Iterator<int> it1(int_array, size, 2);
@@ -135,7 +135,7 @@ TEST(IteratorOperators, InequalityOperator) {
   EXPECT_TRUE(it1 != it2) << "Iterators it1 and it2 should not be equal!";
 }
 
-TEST(IteratorOperators, LessThan) {
+TEST(IteratorCompare, LessThan) {
   int size = 5;
   int *int_array = new int[size]{1, 2, 3, 4, 5};
   Iterator<int> it1(int_array, size, 2);
@@ -145,7 +145,7 @@ TEST(IteratorOperators, LessThan) {
   EXPECT_TRUE(it1 <= it2) << "Iterator it1 should be less or equal than it2!";
 }
 
-TEST(IteratorTest, GreaterThan) {
+TEST(IteratorCompare, GreaterThan) {
   int size = 5;
   int *int_array = new int[size]{1, 2, 3, 4, 5};
   Iterator<int> it1(int_array, size, 3);

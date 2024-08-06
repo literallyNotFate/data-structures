@@ -1,8 +1,11 @@
 set(BINARY ${CMAKE_PROJECT_NAME}_test)
-set(SOURCES ${TEST_SOURCES})
 
-file(GLOB_RECURSE TEST_SOURCES LIST_DIRECTORIES false *.h *.cpp)
-add_executable(${BINARY} ${TEST_SOURCES})
+file(GLOB_RECURSE LINEAR_TEST_SOURCES LIST_DIRECTORIES false "linear/*.cpp")
+file(GLOB_RECURSE ITERATOR_TEST_SOURCES LIST_DIRECTORIES false "iterators/*.cpp")
+
+set(TEST_SOURCES ${LINEAR_TEST_SOURCES} ${ITERATOR_TEST_SOURCES})
+
+add_executable(${BINARY} ${TEST_SOURCES} main.cpp)
 
 target_link_libraries(${BINARY} PUBLIC ${CMAKE_PROJECT_NAME}_lib gtest)
 target_include_directories(${BINARY} PUBLIC
@@ -11,6 +14,7 @@ target_include_directories(${BINARY} PUBLIC
     ${PROJECT_SOURCE_DIR}/src/linear/queue
     ${PROJECT_SOURCE_DIR}/src/utils/iterator
 )
+
 
 include(GoogleTest)
 gtest_discover_tests(${BINARY}

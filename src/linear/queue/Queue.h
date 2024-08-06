@@ -5,21 +5,21 @@
 #include <stdexcept>
 #include <vector>
 
-// Node class
+// QueueNode class
 
-template <class T> class Node {
+template <class T> class QueueNode {
 public:
   T data;
-  Node<T> *next;
-  Node(const T &data) : data(data), next(nullptr) {}
+  QueueNode<T> *next;
+  QueueNode(const T &data) : data(data), next(nullptr) {}
 };
 
 // Queue on linked list
 
 template <class T> class Queue {
 private:
-  Node<T> *head;
-  Node<T> *tail;
+  QueueNode<T> *head;
+  QueueNode<T> *tail;
 
 public:
   // constructors
@@ -37,20 +37,25 @@ public:
   // getters
   inline T get_first() const { return this->head->data; }
   inline T get_last() const { return this->tail->data; }
-  inline Node<T> *get_head() const { return this->head; }
-  inline Node<T> *get_tail() const { return this->tail; }
+  inline QueueNode<T> *get_head() const { return this->head; }
+  inline QueueNode<T> *get_tail() const { return this->tail; }
   int get_length() const;
   int get_index(const T &element) const;
 
   // bool methods
   inline bool is_empty() const { return this->head == nullptr; }
+  bool contains(const T &element) const;
 
-  // enqueue/dequeue
+  // adding to the queue
   void enqueue(const T &element);
   T dequeue();
 
+  // erasing from the queue
+  void erase_all(const T &element);
+
   // useful methods
   void clear();
+  static void swap(Queue<T> &a, Queue<T> &b);
 
   // compare methods
   bool operator>(const Queue<T> &other) const;
@@ -90,7 +95,7 @@ Queue<T>::Queue(const Queue<T> &other) : head(nullptr), tail(nullptr) {
     return;
   }
 
-  Node<T> *temp = other.head;
+  QueueNode<T> *temp = other.head;
   while (temp != nullptr) {
     this->enqueue(temp->data);
     temp = temp->next;
@@ -103,7 +108,7 @@ Queue<T>::Queue(const Queue<T> &other) : head(nullptr), tail(nullptr) {
 
 // Enqueue element in the queue
 template <typename T> void Queue<T>::enqueue(const T &element) {
-  Node<T> *add = new Node<T>(element);
+  QueueNode<T> *add = new QueueNode<T>(element);
   if (this->is_empty()) {
     this->head = this->tail = add;
     return;
@@ -117,7 +122,7 @@ template <typename T> T Queue<T>::dequeue() {
   if (this->is_empty())
     throw std::length_error("Queue is empty!");
 
-  Node<T> *temp = this->head;
+  QueueNode<T> *temp = this->head;
   T element = this->head->data;
   this->head = temp->next;
 
@@ -125,10 +130,33 @@ template <typename T> T Queue<T>::dequeue() {
   return element;
 }
 
+// Erase all elements from the queue
+template <typename T> void Queue<T>::erase_all(const T &element) {
+  if (this->is_empty())
+    throw std::length_error("Queue is empty!");
+
+  if (!this->contains(element))
+    throw std::invalid_argument("Element was not found!");
+
+  while (this->head && this->head->data == element)
+    this->head = this->head->next;
+
+  QueueNode<T> *temp1 = this->head, *temp2 = nullptr;
+
+  while (temp1 != nullptr) {
+    if (temp1->data == element)
+      temp2->next = temp1->next;
+    else
+      temp2 = temp1;
+
+    temp1 = temp1->next;
+  }
+}
+
 // Get length of the queue
 template <typename T> int Queue<T>::get_length() const {
   int length = 0;
-  Node<T> *temp = this->head;
+  QueueNode<T> *temp = this->head;
   while (temp != nullptr) {
     ++length;
     temp = temp->next;
@@ -143,7 +171,7 @@ template <typename T> int Queue<T>::get_index(const T &element) const {
     throw std::length_error("Queue is empty!");
 
   int index = 0;
-  Node<T> temp = this->head;
+  QueueNode<T> temp = this->head;
   while (temp != nullptr) {
     if (temp->data == element)
       break;
@@ -162,13 +190,26 @@ template <typename T> Queue<T> &Queue<T>::operator=(const Queue<T> &other) {
 
   this->clear();
 
-  Node<T> *temp = other.head;
+  QueueNode<T> *temp = other.head;
   while (temp != nullptr) {
     this->enqueue(temp->data);
     temp = temp->next;
   }
 
   return *this;
+}
+
+// If element is in the array
+template <typename T> bool Queue<T>::contains(const T &element) const {
+  QueueNode<T> *temp = this->head;
+  while (temp != nullptr) {
+    if (temp->data == element)
+      return true;
+
+    temp = temp->next;
+  }
+
+  return false;
 }
 
 // ---------
@@ -181,6 +222,13 @@ template <typename T> void Queue<T>::clear() {
     this->dequeue();
 
   this->tail = nullptr;
+}
+
+// Swapping two queues
+template <typename T> void Queue<T>::swap(Queue<T> &a, Queue<T> &b) {
+  Queue<T> temp = a;
+  a = b;
+  b = temp;
 }
 
 // ---------
@@ -196,7 +244,7 @@ template <typename T> bool Queue<T>::operator>(const Queue<T> &other) const {
     return false;
 
   int count = 0;
-  Node<T> *temp1 = this->head, *temp2 = other.head;
+  QueueNode<T> *temp1 = this->head, *temp2 = other.head;
 
   while (temp1 != nullptr && temp2 != nullptr) {
     if (temp1->data > temp2->data)
@@ -218,7 +266,7 @@ template <typename T> bool Queue<T>::operator<(const Queue<T> &other) const {
     return false;
 
   int count = 0;
-  Node<T> *temp1 = this->head, *temp2 = other.head;
+  QueueNode<T> *temp1 = this->head, *temp2 = other.head;
 
   while (temp1 != nullptr && temp2 != nullptr) {
     if (temp1->data < temp2->data)
@@ -236,7 +284,7 @@ template <typename T> bool Queue<T>::operator==(const Queue<T> &other) const {
   if (this->get_length() != other.get_length())
     return false;
 
-  Node<T> *temp1 = this->head, *temp2 = other.head;
+  QueueNode<T> *temp1 = this->head, *temp2 = other.head;
 
   while (temp1 != nullptr && temp2 != nullptr) {
     if (temp1->data != temp2->data)

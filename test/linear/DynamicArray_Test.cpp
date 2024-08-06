@@ -975,6 +975,27 @@ TEST(DynamicArrayUsefulFunctions, FrequencyMap) {
       << "Should throw length_error if array is empty!";
 }
 
+TEST(DynamicArrayUsefulFunctions, Swap) {
+  std::vector<int> vec1{1, 2, 3}, vec2{4, 5, 6, 7};
+  DynamicArray<int> d1(vec1), d2(vec2);
+
+  EXPECT_EQ(d1.get_size(), vec1.size()) << "First array should be sized 3!";
+  EXPECT_EQ(d2.get_size(), vec2.size()) << "Second array should be sized 4!";
+
+  DynamicArray<int>::swap(d1, d2);
+
+  EXPECT_EQ(d1.get_size(), vec2.size())
+      << "First array after swapping should be sized 4!";
+  EXPECT_EQ(d2.get_size(), vec1.size())
+      << "Second array after swapping should be sized 3!";
+
+  for (int i = 0; i < vec2.size(); i++)
+    EXPECT_EQ(d1[i], vec2[i]) << "Values should be equal!";
+
+  for (int i = 0; i < vec1.size(); i++)
+    EXPECT_EQ(d2[i], vec1[i]) << "Values should be equal!";
+}
+
 // ----------
 // Finding min/max test
 // ----------
@@ -1206,4 +1227,67 @@ TEST(DynamicArraySetOperations, Intersection) {
   d2.erase_range(d2.begin(), d2.end());
   EXPECT_THROW(DynamicArray<int> res = d1 & d2, std::length_error)
       << "Should throw length_error if one of the arrays is empty!";
+}
+
+// ----------
+// Some functions test
+// ----------
+
+TEST(DynamicArraySome, Distinct) {
+  std::vector<char> vec{'a', 'b', 'c', 'c', 'b', 'd', 'a'};
+  DynamicArray<char> d(vec);
+
+  Iterator<char> it = d.end();
+  Iterator<char> dist = d.distinct(), expected = it - 1;
+
+  EXPECT_EQ(dist.get_index(), expected.get_index())
+      << "Indexes of found distinct and expected distinct should be equal!";
+  EXPECT_EQ(*dist, *expected)
+      << "Values of found distinct and expected distinct should be equal!";
+  EXPECT_EQ(dist, Iterator<char>(expected, true)) << "Iterators must be equal!";
+
+  d.erase_all('d');
+  dist = d.distinct();
+
+  EXPECT_EQ(dist, d.end())
+      << "Distinct iterator must be equal to end() if nothing was found!";
+
+  d.erase_range(d.begin(), d.end());
+  EXPECT_THROW(dist = d.distinct(), std::length_error)
+      << "Should throw length_error if array is empty!";
+}
+
+TEST(DynamicArraySome, KthDistinct) {
+  std::vector<std::string> vec{"aaa", "aa", "a"};
+  DynamicArray<std::string> d(vec);
+
+  Iterator<std::string> it = d.begin();
+  Iterator<std::string> kth = d.kth_distinct(2);
+
+  EXPECT_EQ(kth, Iterator<std::string>(it + 1, true))
+      << "2nd distinct element should be pointing to the "
+         "2nd element of an array!";
+
+  kth = d.kth_distinct(10);
+  EXPECT_EQ(kth, d.end()) << "Should be equal to end() if nothing was found!";
+
+  d.erase_range(d.begin(), d.end());
+  EXPECT_THROW(kth = d.kth_distinct(3), std::length_error)
+      << "Should throw length_error if array is empty!";
+}
+
+TEST(DynamicArraySome, TopKFrequent) {
+  std::vector<int> vec{1, 1, 1, 2, 2, 3};
+  DynamicArray<int> d(vec);
+
+  std::vector<int> topk = d.top_k_frequent(2);
+  std::vector<int> expected{1, 2};
+
+  for (int i = 0; i < topk.size(); i++)
+    EXPECT_EQ(topk[i], expected[i])
+        << "Values of the topk and expected should be equal!";
+
+  d.erase_range(d.begin(), d.end());
+  EXPECT_THROW(topk = d.top_k_frequent(3), std::length_error)
+      << "Should throw length_error if array is empty!";
 }

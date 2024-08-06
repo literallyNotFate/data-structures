@@ -657,6 +657,31 @@ TEST(StackUsefulFunctions, CountIf) {
   EXPECT_EQ(count, 0) << "Should return 0 if nothing was found!";
 }
 
+TEST(StackUsefulFunctions, Swap) {
+  std::vector<int> vec1{1, 2, 3}, vec2{4, 5, 6, 7};
+  Stack<int> s1(vec1), s2(vec2);
+
+  EXPECT_EQ(s1.get_size(), vec1.size()) << "First stack should be sized 3!";
+  EXPECT_EQ(s2.get_size(), vec2.size()) << "Second stack should be sized 4!";
+
+  Stack<int>::swap(s1, s2);
+
+  EXPECT_EQ(s1.get_size(), vec2.size())
+      << "First stack after swapping should be sized 4!";
+  EXPECT_EQ(s2.get_size(), vec1.size())
+      << "Second stack after swapping should be sized 3!";
+
+  for (int i = 0; i < vec2.size(); i++)
+    EXPECT_EQ(s1[i], vec2[i]) << "Values should be equal!";
+
+  for (int i = 0; i < vec1.size(); i++)
+    EXPECT_EQ(s2[i], vec1[i]) << "Values should be equal!";
+}
+
+// ----------
+// Min/max test
+// ----------
+
 TEST(StackMinMax, Min) {
   std::vector<int> vec1{1, 2, 3, 4, 5, 10, 6, 7};
   Stack<int> s1(vec1);

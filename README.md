@@ -39,8 +39,17 @@
 
 ---
 
-## Building the Project
+## Quick Start
 
+First, you need to copy GoogleTest (GTest) library into your project.
+It must be located in the 'external' folder.
+
+```bash
+mkdir external
+cd external
+git clone https://github.com/google/googletest.git
+```
+Then, you have to build the project itself.
 To build the project, follow these steps:
 
 ```bash
@@ -49,12 +58,17 @@ cd build
 cmake ..
 make
 ```
+You are ready to run the tests!
 
 ---
 
 ## Running the Tests
 
-To run the tests, use the following command:
+There are two options:
+
+# Through executable
+
+To run the tests through extecutable, use the following command:
 
 ```bash
 ./build/your_test_executable
@@ -62,7 +76,7 @@ To run the tests, use the following command:
 
 Replace \`your_test_executable\` with the actual name of your test executable.
 
-## Or
+# With the ctest command (more convenient)
 
 ```bash
 GTEST_COLOR=1 ctest --test-dir build/test --output-on-failure -j12

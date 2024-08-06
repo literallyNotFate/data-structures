@@ -90,6 +90,7 @@ public:
   std::vector<T> bottom_n(const int &n) const;
   int count(const T &element) const;
   int count_if(std::function<bool(T)> fn) const;
+  static void swap(Stack<T> &a, Stack<T> &b);
 
   // min/max find
   T max() const;
@@ -179,6 +180,13 @@ template <typename T> Stack<T> &Stack<T>::operator=(const Stack<T> &other) {
     this->stack[i] = other.stack[i];
 
   return *this;
+}
+
+// Swapping two stacks
+template <typename T> void Stack<T>::swap(Stack<T> &a, Stack<T> &b) {
+  Stack<T> temp = a;
+  a = b;
+  b = temp;
 }
 
 // ----------

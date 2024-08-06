@@ -9,9 +9,11 @@
 #include <functional>
 #include <iostream>
 #include <map>
+#include <queue>
 #include <sstream>
 #include <stdexcept>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 // Dynamic array
@@ -117,6 +119,7 @@ public:
                                    const Iterator<T> it2) const;
   DynamicArray<T> remove_duplicates() const;
   std::map<T, int> frequency_map() const;
+  static void swap(DynamicArray<T> &a, DynamicArray<T> &b);
 
   // min/max find
   T max() const;
@@ -149,6 +152,12 @@ public:
   bool operator<(const DynamicArray<T> &other) const;
   bool operator==(const DynamicArray<T> &other) const;
   bool operator!=(const DynamicArray<T> &other) const;
+
+  // some functions
+  Iterator<T> distinct() const;
+  std::vector<Iterator<T>> distinct_all() const;
+  Iterator<T> kth_distinct(const int &k) const;
+  std::vector<T> top_k_frequent(const int &k) const;
 };
 
 //----------
@@ -553,6 +562,14 @@ void DynamicArray<T>::replace_if(std::function<bool(T)> fn, const T &replace) {
     *it = replace;
 }
 
+// Swapping two dynamic arrays
+template <typename T>
+void DynamicArray<T>::swap(DynamicArray<T> &a, DynamicArray<T> &b) {
+  DynamicArray<T> temp = a;
+  a = b;
+  b = temp;
+}
+
 //----------
 // Useful functions
 // ----------
@@ -910,12 +927,6 @@ DynamicArray<T> DynamicArray<T>::operator|(const DynamicArray<T> &other) const {
     }
   }
 
-  std::cout << "Result: " << std::endl;
-  for (int i = 0; i < result.get_size(); i++)
-    std::cout << result[i] << " ";
-
-  std::cout << "\n\n";
-
   return result;
 }
 
@@ -954,6 +965,77 @@ DynamicArray<T> DynamicArray<T>::operator+(const DynamicArray<T> &other) const {
 
   for (int i = 0; i < other.get_size(); i++)
     result.push_back(other[i]);
+
+  return result;
+}
+
+//----------
+// Some functions
+// ----------
+
+// Getting the first element that appears once in the array
+template <typename T> Iterator<T> DynamicArray<T>::distinct() const {
+  std::map<T, int> fm = this->frequency_map();
+  for (Iterator<T> it = this->begin(); it != this->end(); ++it) {
+    if (fm[*it] == 1)
+      return Iterator<T>(it, true);
+  }
+
+  return end();
+}
+
+// All distinct elements
+template <typename T>
+std::vector<Iterator<T>> DynamicArray<T>::distinct_all() const {
+  std::vector<Iterator<T>> distincts;
+  std::map<T, int> fm = this->frequency_map();
+  for (Iterator it = this->begin(); it != this->end(); ++it) {
+    if (fm[*it] == 1)
+      distincts.push_back(it);
+  }
+
+  return distincts;
+}
+
+// Kth distinct element in the array
+template <typename T>
+Iterator<T> DynamicArray<T>::kth_distinct(const int &k) const {
+  int kth = k;
+  std::map<T, int> fm = this->frequency_map();
+  for (Iterator<T> it = this->begin(); it != this->end(); ++it) {
+    if (fm[*it] == 1)
+      --kth;
+
+    if (kth == 0)
+      return Iterator<T>(it, true);
+  }
+
+  return end();
+}
+
+// Top k frequent elements from the array
+template <typename T>
+std::vector<T> DynamicArray<T>::top_k_frequent(const int &k) const {
+  std::map<T, int> fm = this->frequency_map();
+
+  auto comp = [](std::pair<T, int> &a, std::pair<T, int> &b) {
+    return a.second < b.second;
+  };
+
+  std::priority_queue<std::pair<T, int>, std::vector<std::pair<T, int>>,
+                      decltype(comp)>
+      heap(comp);
+
+  for (std::pair<T, int> entry : fm)
+    heap.push({entry.first, entry.second});
+
+  std::vector<T> result;
+  int count = k;
+  while (count > 0) {
+    result.push_back(heap.top().first);
+    heap.pop();
+    --count;
+  }
 
   return result;
 }
