@@ -11,3 +11,5 @@ and can iterate through them using the increment operator (++). But, all
 iterators do not have similar functionality as that of pointers.
 
 */
+
+int main() { return 0; }

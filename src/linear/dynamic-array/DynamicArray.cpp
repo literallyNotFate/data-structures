@@ -20,3 +20,5 @@ Cons:
   Memory handling
 
 */
+
+int main() { return 0; }

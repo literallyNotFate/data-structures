@@ -113,6 +113,23 @@ TEST(IteratorMethods, SubtractionOperator) {
       << "Should throw out_of_range exception!";
 }
 
+TEST(IteratorMethods, Advance) {
+  int size = 3;
+  int *int_array = new int[size]{10, 20, 30};
+  Iterator<int> it(int_array, size);
+
+  Iterator<int>::advance(it, 2);
+  EXPECT_EQ(it.get_index(), size - 1)
+      << "Iterator should be pointing at the end!";
+
+  Iterator<int>::advance(it, 5);
+  EXPECT_EQ(it.get_index(), size - 1)
+      << "Iterator should still be pointing at the end!";
+
+  Iterator<int>::advance(it, -10);
+  EXPECT_EQ(it.get_index(), 0) << "Iterator should be at the beginning!";
+}
+
 // ----------
 // Compare test
 // ----------

@@ -71,6 +71,19 @@ public:
     return Iterator<T>(this->iter, this->size, new_index);
   }
 
+  // advance method
+  inline static void advance(Iterator<T> &it, int pos) {
+    int n = pos;
+    if (pos > 0) {
+      int remaining = it.size - it.index - 1;
+      n = std::min(pos, remaining);
+    } else {
+      n = std::max(pos, -static_cast<int>(it.index));
+    }
+
+    it.index += n;
+  };
+
   // equals to
   inline bool operator==(const Iterator<T> &other) const {
     return this->iter == other.iter && this->index == other.index &&

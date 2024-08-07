@@ -17,3 +17,5 @@ Cons:
 elements are impossible)
 
 */
+
+int main() { return 0; }

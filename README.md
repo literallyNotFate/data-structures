@@ -39,7 +39,7 @@
 
 ---
 
-## Quick Start
+# Quick Start
 
 First, you need to copy GoogleTest (GTest) library into your project.
 It must be located in the 'external' folder.
@@ -62,29 +62,57 @@ You are ready to run the tests!
 
 ---
 
-## Running the Tests
+# Running the Tests
 
 There are two options:
 
-# Through executable
+## Through executable
 
-To run the tests through extecutable, use the following command:
+**To run the tests through executable, use the following command:**
 
 ```bash
-./build/your_test_executable
+cd build/test
+./your_test_executable
 ```
 
 Replace \`your_test_executable\` with the actual name of your test executable.
+In our case is: ./data-structures_test
 
-# With the ctest command (more convenient)
+## With the ctest command (more convenient)
+
+1. **To run all tests that are in the \`build/test\` folder, use this:
+You can also add --verbose flag.**
 
 ```bash
 GTEST_COLOR=1 ctest --test-dir build/test --output-on-failure -j12
 ```
 
+2. **To run all test of a structure/iterator:**
+
+```bash
+GTEST_COLOR=1 ctest --test-dir build/test --output-on-failure -R Structure -j12
+```
+
+Replace \`Structure\` with the the structure/iterator you want to test (e.g. DynamicArray, Queue, Iterator)
+
+3. **To run a specified test suite:**
+
+```bash
+GTEST_COLOR=1 ctest --test-dir build/test --output-on-failure -R TestSuite -j12
+```
+
+Replace \`TestSuite\` with the test suite (e.g. DynamicArrayCompare)
+
+4. **To run a single test, use the following:**
+
+```bash
+GTEST_COLOR=1 ctest --test-dir build/test --output-on-failure -R TestSuite.Method -j12
+```
+Replace \`TestSuite\` with the test suite (e.g. QueueMethods) and \`Method\` with the testing method (e.g Contains).
+
 ---
 
-## Requirements
+# Requirements
 
 - CMake 3.3.0 or higher
 - A C++ compiler (e.g., g++, clang++)

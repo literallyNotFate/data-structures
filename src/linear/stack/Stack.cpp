@@ -19,3 +19,5 @@ Cons:
     Danger of overflow
 
 */
+
+int main() { return 0; }
