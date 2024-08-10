@@ -75,6 +75,8 @@ public:
   void replace(const Iterator<T> it, const T &replace);
   void replace_all(const T &element, const T &replace);
   void replace_if(std::function<bool(T)> fn, const T &replace);
+  void replace_range(const Iterator<T> it1, const Iterator<T> it2,
+                     const T &replace);
 
   // converting methods
   inline const std::vector<T> to_vector() const {
@@ -369,7 +371,7 @@ template <typename T> Iterator<T> Stack<T>::find(const T &element) const {
     throw std::underflow_error("Stack underflow!");
 
   for (Iterator<T> it = begin(); it != end() + 1; ++it) {
-    if (*(it) == element)
+    if (*it == element)
       return Iterator<T>(it, true);
   }
 
@@ -422,7 +424,7 @@ template <typename T>
 void Stack<T>::replace_all(const T &element, const T &replace) {
   std::vector<Iterator<T>> items = this->find_all(element);
   if (items.size() == 0)
-    throw std::invalid_argument("Element was not found!");
+    throw std::invalid_argument("Elements were not found!");
 
   for (Iterator<T> it : items)
     *it = replace;
@@ -434,6 +436,19 @@ void Stack<T>::replace_if(std::function<bool(T)> fn, const T &replace) {
   std::vector<Iterator<T>> items = this->find_if(fn);
   for (Iterator<T> it : items)
     *it = replace;
+}
+
+// Replace all elements in a range
+template <typename T>
+void Stack<T>::replace_range(const Iterator<T> it1, const Iterator<T> it2,
+                             const T &replace) {
+  if (it1 > it2)
+    throw std::invalid_argument("1st range must be less than 2nd!");
+
+  for (Iterator<T> it = it1; it != it2; ++it)
+    *it = replace;
+
+  *it2 = replace;
 }
 
 // To string

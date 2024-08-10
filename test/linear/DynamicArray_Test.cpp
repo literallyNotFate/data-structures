@@ -584,7 +584,6 @@ TEST(DynamicArrayMethods, FindAll) {
         << "Values of found iterators should be equal!";
   }
 
-  std::vector<Iterator<int>> not_found;
   f = d.find_all(99);
 
   EXPECT_EQ(f.size(), 0) << "Vector of not found values must be 0!";
@@ -609,7 +608,6 @@ TEST(DynamicArrayMethods, FindIf) {
         << "Values of found iterators should be equal!";
   }
 
-  std::vector<Iterator<int>> not_found;
   f = d.find_if([](int x) { return x < 0; });
 
   EXPECT_EQ(f.size(), 0) << "Vector of not found values must be 0!";
@@ -698,6 +696,27 @@ TEST(DynamicArrayMethods, ReplaceIf) {
       d.replace_if([](std::string str) { return str.size() > 5; }, "X"),
       std::length_error)
       << "Should throw length_error if array is empty!";
+}
+
+TEST(DynamicArrayMethods, ReplaceRange) {
+  std::vector<int> vec{1, 2, 3, 4, 5, 6, 7};
+  DynamicArray<int> d(vec);
+
+  int replace = 99;
+  Iterator<int> it = d.begin();
+  std::vector<int> expected{1, 2, 99, 99, 99, 99, 99};
+
+  EXPECT_THROW(d.replace_range(it - 99, it + 1, replace), std::out_of_range)
+      << "Should throw out_of_range!";
+  EXPECT_THROW(d.replace_range(it + 1, it + 99, replace), std::out_of_range)
+      << "Should throw out_of_range!";
+  EXPECT_THROW(d.replace_range(it + 2, it + 1, replace), std::invalid_argument)
+      << "it1 should be less than it2!";
+
+  d.replace_range(it + 2, d.end(), replace);
+
+  for (int i = 0; i < d.get_size(); i++)
+    EXPECT_EQ(d[i], expected[i]) << "Valuees should be equal!";
 }
 
 TEST(DynamicArrayMethods, ToVector) {

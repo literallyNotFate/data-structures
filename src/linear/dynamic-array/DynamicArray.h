@@ -95,6 +95,8 @@ public:
   void replace(const Iterator<T> it, const T &replace);
   void replace_all(const T &element, const T &replace);
   void replace_if(std::function<bool(T)> fn, const T &replace);
+  void replace_range(const Iterator<T> it1, const Iterator<T> it2,
+                     const T &replace);
 
   // converting methods
   inline const std::vector<T> to_vector() const {
@@ -452,9 +454,6 @@ template <typename T> void DynamicArray<T>::erase(const Iterator<T> it) {
 template <typename T>
 void DynamicArray<T>::erase_range(const Iterator<T> it1,
                                   const Iterator<T> it2) {
-  if (this->is_empty())
-    throw std::length_error("Array is empty, try to add elements!");
-
   if (it1 > it2)
     throw std::invalid_argument("1st range must be less than 2nd!");
 
@@ -486,7 +485,7 @@ Iterator<T> DynamicArray<T>::find(const T &element) const {
     throw std::length_error("Array is empty, try to add elements!");
 
   for (Iterator<T> it = begin(); it != end(); ++it) {
-    if (*(it) == element)
+    if (*it == element)
       return Iterator<T>(it, true);
   }
 
@@ -548,7 +547,7 @@ template <typename T>
 void DynamicArray<T>::replace_all(const T &element, const T &replace) {
   std::vector<Iterator<T>> items = this->find_all(element);
   if (items.size() == 0)
-    throw std::invalid_argument("Element was not found!");
+    throw std::invalid_argument("Elements were not found!");
 
   for (Iterator<T> it : items)
     *it = replace;
@@ -560,6 +559,19 @@ void DynamicArray<T>::replace_if(std::function<bool(T)> fn, const T &replace) {
   std::vector<Iterator<T>> items = this->find_if(fn);
   for (Iterator<T> it : items)
     *it = replace;
+}
+
+// Replace all elements in a range
+template <typename T>
+void DynamicArray<T>::replace_range(const Iterator<T> it1,
+                                    const Iterator<T> it2, const T &replace) {
+  if (it1 > it2)
+    throw std::invalid_argument("1st range must be less than 2nd!");
+
+  for (Iterator<T> it = it1; it != it2; ++it)
+    *it = replace;
+
+  *it2 = replace;
 }
 
 // Swapping two dynamic arrays

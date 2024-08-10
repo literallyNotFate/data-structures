@@ -581,6 +581,26 @@ TEST(StackMethods, ReplaceAll) {
       << "Should throw underflow_error if stack is empty!";
 }
 
+TEST(StackMethods, ReplaceRange) {
+  std::vector<int> vec{1, 2, 3, 4};
+  Stack<int> s(vec);
+
+  Iterator<int> it = s.begin();
+  int replace = 99;
+  std::vector<int> expected{99, 99, 99, 99};
+
+  EXPECT_THROW(s.replace_range(it - 99, it + 1, replace), std::out_of_range)
+      << "Should throw out_of_range!";
+  EXPECT_THROW(s.replace_range(it + 1, it + 99, replace), std::out_of_range)
+      << "Should throw out_of_range!";
+  EXPECT_THROW(s.replace_range(it + 2, it + 1, replace), std::invalid_argument)
+      << "it1 should be less than it2!";
+
+  s.replace_range(s.begin(), s.end(), replace);
+  for (int i = 0; i < expected.size(); i++)
+    EXPECT_EQ(s[i], expected[i]) << "Values should be equal!";
+}
+
 // ----------
 // Useful functions test
 // ----------

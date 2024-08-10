@@ -1,4 +1,5 @@
 #include <Queue.h>
+#include <QueueIterator.h>
 #include <gtest/gtest.h>
 
 #include <cstdlib>
@@ -14,6 +15,7 @@ TEST(QueueConstructors, BasicConstructor) {
   Queue<int> q;
   EXPECT_EQ(q.get_head(), nullptr) << "Head should be nullptr!";
   EXPECT_EQ(q.get_tail(), nullptr) << "Tail should be nullptr!";
+  EXPECT_EQ(q.get_length(), 0) << "Length should be 0!";
 }
 
 TEST(QueueConstructors, VectorBasedConstructor) {
@@ -139,6 +141,112 @@ TEST(QueueModify, Dequeue) {
       << "Should throw length_error if queue is empty!";
 }
 
+TEST(QueueModify, Insert) {
+  std::vector<int> vec{1, 2, 3, 4, 5};
+  Queue<int> q(vec);
+
+  QueueIterator<int> qit = q.begin() + 2;
+  q.insert(qit, 99);
+
+  EXPECT_EQ(q.get_length(), vec.size() + 1)
+      << "Length of the queue must be equal to 6!";
+
+  std::vector<int> expected{1, 2, 99, 3, 4, 5};
+  QueueNode<int> *temp = q.get_head();
+  int index = 0;
+  while (temp != nullptr) {
+    EXPECT_EQ(temp->data, expected[index]) << "Values should be equal!";
+
+    index++;
+    temp = temp->next;
+  }
+}
+
+TEST(QueueModify, InsertVector) {
+  std::vector<int> vec{10, 20, 30, 40, 50};
+  Queue<int> q(vec);
+
+  QueueIterator<int> qit = q.begin();
+  QueueIterator<int>::advance(qit, 4);
+
+  std::vector<int> add{0, 0, 0, 0, 0};
+  q.insert(qit, add);
+
+  std::vector<int> expected{10, 20, 30, 40, 0, 0, 0, 0, 0, 50};
+
+  EXPECT_EQ(q.get_length(), vec.size() + add.size())
+      << "Final length of the queue must be result of sum between initial "
+         "vector and adding vector!";
+
+  int index = 0;
+  QueueNode<int> *temp = q.get_head();
+  while (temp != nullptr) {
+    EXPECT_EQ(temp->data, expected[index]);
+
+    index++;
+    temp = temp->next;
+  }
+
+  std::vector<int> empty;
+  EXPECT_THROW(q.insert(qit, empty), std::invalid_argument)
+      << "Should throw invalid_argument if added vector is empty!";
+}
+
+TEST(QueueModify, Erase) {
+  std::vector<int> vec{5, 10, 15, 20};
+  Queue<int> q(vec);
+
+  int el = 15;
+  q.erase(el);
+
+  EXPECT_EQ(q.get_length(), vec.size() - 1)
+      << "Length of the queue must be equal to 3!";
+
+  int index = 0;
+  std::vector<int> expected{5, 10, 20};
+  QueueNode<int> *temp = q.get_head();
+  while (temp != nullptr) {
+    EXPECT_EQ(temp->data, expected[index]);
+
+    index++;
+    temp = temp->next;
+  }
+
+  el = 99;
+  EXPECT_THROW(q.erase(el), std::invalid_argument)
+      << "Should throw invalid_argument if element was not found!";
+
+  q.clear();
+  EXPECT_THROW(q.erase(el), std::length_error)
+      << "Should throw length_error if queue is empty!";
+}
+
+TEST(QueueModify, EraseIterator) {
+  std::vector<std::string> vec{"a", "ab", "abc", "abcd", "abcde"};
+  Queue<std::string> q(vec.begin(), vec.end());
+
+  QueueIterator<std::string> qit = q.end();
+  q.erase(qit);
+
+  EXPECT_EQ(q.get_length(), vec.size() - 1)
+      << "Length of the queue must be equal to 4!";
+
+  int index = 0;
+  std::vector<std::string> expected{"a", "ab", "abc", "abcd"};
+  QueueNode<std::string> *temp = q.get_head();
+
+  while (temp != nullptr) {
+    EXPECT_EQ(temp->data, expected[index]);
+
+    index++;
+    temp = temp->next;
+  }
+
+  q.clear();
+  EXPECT_THROW(q.erase(qit), std::length_error)
+      << "Should throw length_error if queue is empty!";
+}
+
 TEST(QueueModify, EraseAll) {
   std::vector<float> vec{1.0, 1.0, 2.0, 3.0, 2.0, 2.0, 4.5};
   Queue<float> q(vec.begin(), vec.end());
@@ -166,6 +274,26 @@ TEST(QueueModify, EraseAll) {
   q.clear();
   EXPECT_THROW(q.erase_all(el), std::length_error)
       << "Should throw length_error if queue is empty!";
+}
+
+// ----------
+// Iterators test
+// ----------
+
+TEST(QueueIterators, IteratorBegin) {
+  std::vector<int> vec{5, 10, 15, 20, 25};
+  Queue<int> q(vec);
+
+  QueueIterator<int> qit = q.begin();
+  EXPECT_EQ(*qit, 5) << "Begin iterator should be at the first element!";
+}
+
+TEST(QueueIterators, IteratorEnd) {
+  std::vector<int> vec{5, 10, 15, 20, 25};
+  Queue<int> q(vec);
+
+  QueueIterator<int> qit = q.end();
+  EXPECT_EQ(*qit, 25) << "End iterator should be pointing at the last element!";
 }
 
 // ----------
@@ -200,6 +328,218 @@ TEST(QueueMethods, Contains) {
 
   EXPECT_TRUE(q.contains(1)) << "1 should be in the array!";
   EXPECT_FALSE(q.contains(99)) << "99 should not be in the array!";
+}
+
+TEST(QueueMethods, At) {
+  std::vector<int> vec{1, 2, 3, 4, 5};
+  Queue<int> q(vec);
+
+  int index = 0;
+  EXPECT_EQ(q.at(index)->data, *(q.begin())) << "First element should be 1!";
+
+  index = 4;
+  EXPECT_EQ(q[index]->data, *(q.end())) << "Last element should be 5!";
+
+  index = 99;
+  EXPECT_THROW(q.at(index), std::out_of_range)
+      << "Should throw out_of_range if provided index is wrong!";
+
+  q.clear();
+  EXPECT_THROW(q.at(index), std::length_error)
+      << "Should throw length_error if queue is empty!";
+}
+
+TEST(QueueMethods, Find) {
+  std::vector<float> vec{1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0};
+  Queue<float> q(vec);
+
+  QueueIterator<float> f = q.find(5.0);
+  EXPECT_EQ(vec[q.get_index(*f)], vec[4]) << "Values should be equal!";
+
+  f = q.find(7.0);
+  EXPECT_EQ(vec[q.get_index(*f)], vec[vec.size() - 1])
+      << "Values should be equal!";
+
+  f = q.find(99.0);
+  EXPECT_EQ(f, q.end()) << "Should point to the last element if not found!";
+
+  q.clear();
+  EXPECT_THROW(f = q.find(1.0), std::length_error)
+      << "Should throw length_error if queue is empty!";
+}
+
+TEST(QueueMethods, FindAll) {
+  std::vector<char> vec{'a', 'b', 'c', 'a', 'a', 'b'};
+  Queue<char> q(vec.begin(), vec.end());
+
+  std::vector<QueueIterator<char>> iterators{q.begin() + 1, q.end()};
+  std::vector<QueueIterator<char>> f = q.find_all('b');
+
+  for (int i = 0; i < f.size(); i++) {
+    EXPECT_EQ(vec[q.get_index(*(f[i]))], vec[q.get_index(*iterators[i])])
+        << "Values should be equal!";
+    EXPECT_EQ(f[i], iterators[i]) << "Iterators should be equal!";
+  }
+
+  f = q.find_all('x');
+  EXPECT_EQ(f.size(), 0) << "Vector of not found values must be 0!";
+
+  q.clear();
+  EXPECT_THROW(q.find_all('a'), std::length_error)
+      << "Should throw length_error if queue is empty!";
+}
+
+TEST(QueueMethods, FindIf) {
+  std::vector<int> vec{6, 7, 8, 9, 10};
+  Queue<int> q(vec.begin(), vec.end());
+
+  QueueIterator<int> qit = q.begin();
+  std::vector<QueueIterator<int>> iterators{qit + 1, qit + 3};
+  std::vector<QueueIterator<int>> f =
+      q.find_if([](int x) { return x % 2 != 0; });
+
+  for (int i = 0; i < f.size(); i++) {
+    EXPECT_EQ(vec[q.get_index(*(f[i]))], vec[q.get_index(*iterators[i])])
+        << "Values should be equal!";
+    EXPECT_EQ(f[i], iterators[i]) << "Iterators should be equal!";
+  }
+
+  f = q.find_if([](int x) { return x < 0; });
+
+  EXPECT_EQ(f.size(), 0) << "Vector of not found values must be 0!";
+
+  q.clear();
+  EXPECT_THROW(q.find_if([](int x) { return x > 0; }), std::length_error)
+      << "Should throw length_error if queue is empty!";
+}
+
+TEST(QueueMethods, ReplaceOccurence) {
+  std::vector<std::string> vec{"a", "ab", "abc", "abcd", "abcde"};
+  Queue<std::string> q(vec);
+
+  std::string find = "abc";
+  std::vector<std::string> expected{"a", "ab", "hello", "abcd", "abcde"};
+
+  q.replace(find, "hello");
+
+  int index = 0;
+  QueueNode<std::string> *temp = q.get_head();
+  while (temp != nullptr) {
+    EXPECT_EQ(temp->data, expected[index]) << "Values should be equal!";
+
+    index++;
+    temp = temp->next;
+  }
+
+  find = "x";
+  EXPECT_THROW(q.replace(find, "a"), std::invalid_argument)
+      << "Should throw invalid_argument if element was not found!";
+
+  q.clear();
+  EXPECT_THROW(q.replace(find, "a"), std::length_error)
+      << "Should throw length_error if queue is empty!";
+}
+
+TEST(QueueMethods, ReplaceIterator) {
+  std::vector<char> vec{'a', 'b', 'c', 'd', 'e'};
+  Queue<char> q(vec);
+
+  QueueIterator<char> qit = q.begin() + 3;
+  std::vector<char> expected{'a', 'b', 'c', 'x', 'e'};
+
+  q.replace(qit, 'x');
+
+  int index = 0;
+  QueueNode<char> *temp = q.get_head();
+  while (temp != nullptr) {
+    EXPECT_EQ(temp->data, expected[index]) << "Values should be equal!";
+
+    index++;
+    temp = temp->next;
+  }
+
+  q.clear();
+  EXPECT_THROW(q.replace(qit, 'x'), std::length_error)
+      << "Should throw length_error if queue is empty!";
+}
+
+TEST(QueueMethods, ReplaceAll) {
+  std::vector<int> vec{2, 3, 4, 2, 5, 6, 2};
+  Queue<int> q(vec);
+
+  int replace = 2;
+  std::vector<int> expected{99, 3, 4, 99, 5, 6, 99};
+
+  q.replace_all(replace, 99);
+
+  QueueNode<int> *temp = q.get_head();
+  int index = 0;
+  while (temp != nullptr) {
+    EXPECT_EQ(temp->data, expected[index]) << "Values should be equal!";
+
+    index++;
+    temp = temp->next;
+  }
+
+  replace = 50;
+  EXPECT_THROW(q.replace_all(replace, 5), std::invalid_argument)
+      << "Should throw invalid_argument if elements were not found!";
+
+  q.clear();
+  EXPECT_THROW(q.replace_all(replace, 5), std::length_error)
+      << "Should throw length_error if queue is empty!";
+}
+
+TEST(QueueMethods, ReplaceIf) {
+  std::vector<bool> vec{true, true, false, false, true, true};
+  Queue<bool> q(vec.begin(), vec.end());
+
+  std::vector<bool> expected(vec.size());
+  std::fill(expected.begin(), expected.end(), true);
+
+  q.replace_if([](bool x) { return x == false; }, true);
+
+  QueueNode<bool> *temp = q.get_head();
+  int index = 0;
+  while (temp != nullptr) {
+    EXPECT_EQ(temp->data, expected[index]) << "Values should be equal!";
+
+    index++;
+    temp = temp->next;
+  }
+
+  q.clear();
+  EXPECT_THROW(q.replace_if([](bool x) { return x == true; }, false),
+               std::length_error)
+      << "Should throw length_error if queue is empty!";
+}
+
+TEST(QueueMethods, ReplaceRange) {
+  std::vector<char> vec{'a', 'b', 'c', 'd', 'e'};
+  Queue<char> q(vec);
+
+  QueueIterator<char> qit = q.begin();
+  char replace = 'x';
+  std::vector<char> expected{'a', 'b', 'x', 'x', 'x'};
+
+  EXPECT_THROW(q.replace_range(qit + 2, qit + 1, replace),
+               std::invalid_argument)
+      << "qit1 should be less than qit2!";
+
+  q.replace_range(qit + 2, q.end(), replace);
+
+  int index = 0;
+  QueueNode<char> *temp = q.get_head();
+  while (temp != nullptr) {
+    EXPECT_EQ(temp->data, expected[index]) << "Values should be equal!";
+
+    index++;
+    temp = temp->next;
+  }
+
+  q.clear();
+  EXPECT_THROW(q.replace_range(q.begin(), q.end(), replace), std::length_error)
+      << "Should throw length_error if queue is empty!";
 }
 
 // ----------

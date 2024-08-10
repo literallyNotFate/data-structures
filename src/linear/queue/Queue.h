@@ -1,11 +1,13 @@
 #ifndef QUEUE_H
 #define QUEUE_H
 
+#include <QueueIterator.h>
+
 #include <iostream>
 #include <stdexcept>
 #include <vector>
 
-// QueueNode class
+// Queue node class
 
 template <class T> class QueueNode {
 public:
@@ -20,10 +22,11 @@ template <class T> class Queue {
 private:
   QueueNode<T> *head;
   QueueNode<T> *tail;
+  int length;
 
 public:
   // constructors
-  inline explicit Queue<T>() : head(nullptr), tail(nullptr){};
+  inline explicit Queue<T>() : head(nullptr), tail(nullptr), length(0){};
   Queue<T>(std::vector<T> vec);
   template <typename Iterator> Queue<T>(Iterator begin, Iterator end);
   Queue<T>(const Queue<T> &other);
@@ -39,23 +42,49 @@ public:
   inline T get_last() const { return this->tail->data; }
   inline QueueNode<T> *get_head() const { return this->head; }
   inline QueueNode<T> *get_tail() const { return this->tail; }
-  int get_length() const;
+  inline int get_length() const { return this->length; }
+  int get_index(const QueueNode<T> *node) const;
   int get_index(const T &element) const;
 
   // bool methods
   inline bool is_empty() const { return this->head == nullptr; }
   bool contains(const T &element) const;
 
+  // accessing element
+  QueueNode<T> *at(const int &index) const;
+  inline QueueNode<T> *operator[](const int &index) { return this->at(index); }
+
   // adding to the queue
   void enqueue(const T &element);
-  T dequeue();
+  void insert(const QueueIterator<T> qit, const T &element);
+  void insert(const QueueIterator<T> qit, const std::vector<T> &vec);
 
   // erasing from the queue
+  T dequeue();
+  void erase(const T &element);
+  void erase(const QueueIterator<T> qit);
   void erase_all(const T &element);
+
+  // find
+  QueueIterator<T> find(const T &element) const;
+  std::vector<QueueIterator<T>> find_all(const T &element) const;
+  std::vector<QueueIterator<T>> find_if(std::function<bool(T)> fn) const;
+
+  // replace
+  void replace(const T &element, const T &replace);
+  void replace(const QueueIterator<T> qit, const T &replace);
+  void replace_all(const T &element, const T &replace);
+  void replace_if(std::function<bool(T)> fn, const T &replace);
+  void replace_range(const QueueIterator<T> qit1, const QueueIterator<T> qit2,
+                     const T &replace);
 
   // useful methods
   void clear();
   static void swap(Queue<T> &a, Queue<T> &b);
+
+  // iterators
+  inline QueueIterator<T> begin() const { return QueueIterator<T>(this->head); }
+  inline QueueIterator<T> end() const { return QueueIterator<T>(this->tail); }
 
   // compare methods
   bool operator>(const Queue<T> &other) const;
@@ -70,7 +99,7 @@ public:
 
 // Vector based constructor
 template <typename T>
-Queue<T>::Queue(std::vector<T> vec) : head(nullptr), tail(nullptr) {
+Queue<T>::Queue(std::vector<T> vec) : head(nullptr), tail(nullptr), length(0) {
   for (const T &element : vec)
     this->enqueue(element);
 }
@@ -78,7 +107,8 @@ Queue<T>::Queue(std::vector<T> vec) : head(nullptr), tail(nullptr) {
 // Based on range vector iterator constructor
 template <typename T>
 template <typename Iterator>
-Queue<T>::Queue(Iterator begin, Iterator end) : head(nullptr), tail(nullptr) {
+Queue<T>::Queue(Iterator begin, Iterator end)
+    : head(nullptr), tail(nullptr), length(0) {
   if (begin >= end)
     throw std::invalid_argument(
         "The first iterator must be less than the second iterator!");
@@ -89,7 +119,8 @@ Queue<T>::Queue(Iterator begin, Iterator end) : head(nullptr), tail(nullptr) {
 
 // Copy constructor (deep copy)
 template <typename T>
-Queue<T>::Queue(const Queue<T> &other) : head(nullptr), tail(nullptr) {
+Queue<T>::Queue(const Queue<T> &other)
+    : head(nullptr), tail(nullptr), length(0) {
   if (other.is_empty()) {
     this->head = this->tail = nullptr;
     return;
@@ -109,12 +140,88 @@ Queue<T>::Queue(const Queue<T> &other) : head(nullptr), tail(nullptr) {
 // Enqueue element in the queue
 template <typename T> void Queue<T>::enqueue(const T &element) {
   QueueNode<T> *add = new QueueNode<T>(element);
+  ++this->length;
+
   if (this->is_empty()) {
     this->head = this->tail = add;
     return;
   }
 
   this->tail = this->tail->next = add;
+}
+
+// Insert element at given iterator
+template <typename T>
+void Queue<T>::insert(const QueueIterator<T> qit, const T &element) {
+  QueueNode<T> *target = qit.get_node();
+  ++this->length;
+
+  if (!this->head || this->head == target) {
+    QueueNode<T> *add = new QueueNode<T>(element);
+    add->next = this->head;
+    this->head = add;
+
+    if (!this->tail)
+      this->tail = add;
+
+    return;
+  }
+
+  QueueNode<T> *prev = nullptr, *current = this->head;
+
+  while (current != nullptr && current != target) {
+    prev = current;
+    current = current->next;
+  }
+
+  if (current == target) {
+    QueueNode<T> *add = new QueueNode<T>(element);
+    prev->next = add;
+    add->next = target;
+  }
+}
+
+// Insert vector at given iterator
+template <typename T>
+void Queue<T>::insert(const QueueIterator<T> qit, const std::vector<T> &vec) {
+  if (vec.empty())
+    throw std::invalid_argument("Empty vector cannot be inserted!");
+
+  QueueNode<T> *target = qit.get_node();
+
+  if (!this->head || this->head == target) {
+    for (auto it = vec.begin(); it != vec.end(); ++it) {
+      QueueNode<T> *add = new QueueNode<T>(*it);
+      add->next = this->head;
+      this->head = add;
+
+      if (!this->tail)
+        this->tail = add;
+
+      ++this->length;
+    }
+
+    return;
+  }
+
+  QueueNode<T> *prev = nullptr, *current = this->head;
+
+  while (current != nullptr && current != target) {
+    prev = current;
+    current = current->next;
+  }
+
+  if (current == target) {
+    for (auto it = vec.begin(); it != vec.end(); ++it) {
+      QueueNode<T> *add = new QueueNode<T>(*it);
+      prev->next = add;
+      prev = add;
+
+      ++this->length;
+    }
+
+    prev->next = target;
+  }
 }
 
 // Dequeue element in the queue
@@ -127,7 +234,79 @@ template <typename T> T Queue<T>::dequeue() {
   this->head = temp->next;
 
   delete temp;
+  --this->length;
+
   return element;
+}
+
+// Erase specific element from the queue
+template <typename T> void Queue<T>::erase(const T &element) {
+  if (this->is_empty())
+    throw std::length_error("Queue is empty!");
+
+  if (!this->contains(element))
+    throw std::invalid_argument("Element was not found!");
+
+  if (this->head->data == element) {
+    this->dequeue();
+    return;
+  }
+
+  --this->length;
+
+  if (this->tail->data == element) {
+    QueueNode<T> *temp = this->head;
+    while (temp->next->next != nullptr)
+      temp = temp->next;
+
+    delete temp->next;
+    temp->next = nullptr;
+
+    return;
+  }
+
+  QueueNode<T> *temp1 = this->head, *temp2 = this->head->next;
+
+  while (temp2 != nullptr && temp2->data != element) {
+    temp2 = temp2->next;
+    temp1 = temp1->next;
+  }
+
+  temp1->next = temp2->next;
+  delete temp2;
+}
+
+// Erase element by iterator
+template <typename T> void Queue<T>::erase(const QueueIterator<T> qit) {
+  if (this->is_empty())
+    throw std::length_error("Queue is empty!");
+
+  QueueNode<T> *target = qit.get_node();
+  --this->length;
+
+  if (this->head == target) {
+    this->head = head->next;
+    delete target;
+
+    if (!this->head)
+      this->tail = nullptr;
+
+    return;
+  }
+
+  QueueNode<T> *prev = nullptr, *current = this->head;
+  while (current != nullptr && current != target) {
+    prev = current;
+    current = current->next;
+  }
+
+  if (current == target) {
+    prev->next = current->next;
+    if (current == tail)
+      this->tail = prev;
+
+    delete current;
+  }
 }
 
 // Erase all elements from the queue
@@ -144,34 +323,41 @@ template <typename T> void Queue<T>::erase_all(const T &element) {
   QueueNode<T> *temp1 = this->head, *temp2 = nullptr;
 
   while (temp1 != nullptr) {
-    if (temp1->data == element)
+    if (temp1->data == element) {
       temp2->next = temp1->next;
-    else
+      --this->length;
+    } else
       temp2 = temp1;
 
     temp1 = temp1->next;
   }
 }
 
-// Get length of the queue
-template <typename T> int Queue<T>::get_length() const {
-  int length = 0;
+// Get index of a node (first occurence)
+template <typename T> int Queue<T>::get_index(const QueueNode<T> *node) const {
+  if (this->is_empty())
+    throw std::length_error("Queue is empty!");
+
+  int index = 0;
   QueueNode<T> *temp = this->head;
   while (temp != nullptr) {
-    ++length;
+    if (temp == node)
+      break;
+
     temp = temp->next;
+    index++;
   }
 
-  return length;
+  return index;
 }
 
-// Get index of an element (first occurence)
+// Get index of a value (first occurence)
 template <typename T> int Queue<T>::get_index(const T &element) const {
   if (this->is_empty())
     throw std::length_error("Queue is empty!");
 
   int index = 0;
-  QueueNode<T> temp = this->head;
+  QueueNode<T> *temp = this->head;
   while (temp != nullptr) {
     if (temp->data == element)
       break;
@@ -181,6 +367,24 @@ template <typename T> int Queue<T>::get_index(const T &element) const {
   }
 
   return index;
+}
+
+// Get node by index
+template <typename T> QueueNode<T> *Queue<T>::at(const int &index) const {
+  if (this->is_empty())
+    throw std::length_error("Queue is empty!");
+
+  if (index < 0 || index > this->get_length() - 1)
+    throw std::out_of_range("Provided index is out of range!");
+
+  int idx = index;
+  QueueNode<T> *temp = this->head;
+  while (idx > 0) {
+    temp = temp->next;
+    --idx;
+  }
+
+  return temp;
 }
 
 // Equal operator
@@ -210,6 +414,107 @@ template <typename T> bool Queue<T>::contains(const T &element) const {
   }
 
   return false;
+}
+
+// Find element in the queue
+template <typename T> QueueIterator<T> Queue<T>::find(const T &element) const {
+  if (this->is_empty())
+    throw std::length_error("Queue is empty!");
+
+  for (QueueIterator<T> qit = begin(); qit != end().get_node()->next; ++qit) {
+    if (*qit == element)
+      return QueueIterator<T>(qit, true);
+  }
+
+  return end();
+}
+
+// Find all elements in the queue
+template <typename T>
+std::vector<QueueIterator<T>> Queue<T>::find_all(const T &element) const {
+  if (this->is_empty())
+    throw std::length_error("Queue is empty!");
+
+  std::vector<QueueIterator<T>> iterators;
+  for (QueueIterator<T> qit = begin(); qit != end().get_node()->next; ++qit) {
+    if (*qit == element)
+      iterators.push_back(qit);
+  }
+
+  return iterators;
+}
+
+// Find all elements that satisfy the condition/predicate
+template <typename T>
+std::vector<QueueIterator<T>>
+Queue<T>::find_if(std::function<bool(T)> fn) const {
+  if (this->is_empty())
+    throw std::length_error("Queue is empty!");
+
+  std::vector<QueueIterator<T>> iterators;
+  for (QueueIterator<T> qit = begin(); qit != end().get_node()->next; ++qit) {
+    if (fn(*qit))
+      iterators.push_back(qit);
+  }
+
+  return iterators;
+}
+
+// Replace first occurrence of a given element
+template <typename T>
+void Queue<T>::replace(const T &element, const T &replace) {
+  QueueIterator<T> el = this->find(element);
+  if (el == end())
+    throw std::invalid_argument("Element was not found!");
+
+  *el = replace;
+}
+
+// Replace at given iterator
+template <typename T>
+void Queue<T>::replace(const QueueIterator<T> qit, const T &replace) {
+  if (this->is_empty())
+    throw std::length_error("Queue is empty!");
+
+  *qit = replace;
+}
+
+// Replace all occurrences of element
+template <typename T>
+void Queue<T>::replace_all(const T &element, const T &replace) {
+  std::vector<QueueIterator<T>> items = this->find_all(element);
+  if (items.size() == 0)
+    throw std::invalid_argument("Elements were not found!");
+
+  for (QueueIterator<T> qit : items)
+    *qit = replace;
+}
+
+// Replace all occurrences of element that satisfy the condition
+template <typename T>
+void Queue<T>::replace_if(std::function<bool(T)> fn, const T &replace) {
+  std::vector<QueueIterator<T>> items = this->find_if(fn);
+  for (QueueIterator<T> qit : items)
+    *qit = replace;
+}
+
+// Replace all elements in a ragne
+template <typename T>
+void Queue<T>::replace_range(const QueueIterator<T> qit1,
+                             const QueueIterator<T> qit2, const T &replace) {
+  if (this->is_empty())
+    throw std::length_error("Queue is empty!");
+
+  int index1 = this->get_index(qit1.get_node()),
+      index2 = this->get_index(qit2.get_node());
+
+  if (index1 > index2)
+    throw std::invalid_argument("1st range should be less than 2nd!");
+
+  for (QueueIterator<T> qit = qit1; qit != qit2; ++qit)
+    *qit = replace;
+
+  *qit2 = replace;
 }
 
 // ---------

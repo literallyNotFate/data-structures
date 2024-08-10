@@ -1,20 +1,27 @@
 #ifndef QUEUEITERATOR_H
 #define QUEUEITERATOR_H
 
-#include <Queue.h>
 #include <iostream>
 #include <stdexcept>
+
+template <typename T> struct QueueNode;
+template <typename T> class Queue;
 
 // Queue Iterator (singly linked list)
 
 template <class T> class QueueIterator {
 private:
   QueueNode<T> *node;
+  bool found;
 
 public:
   // constructors
-  inline QueueIterator<T>(const Queue<T> &queue) : node(queue.get_head()){};
-  inline QueueIterator<T>(QueueNode<T> *node) : node(node){};
+  inline QueueIterator<T>(const Queue<T> &queue)
+      : node(queue.get_head()), found(false){};
+  inline QueueIterator<T>(QueueNode<T> *node, const bool found = false)
+      : node(node), found(found){};
+  inline QueueIterator<T>(const QueueIterator<T> &qit, const bool found = false)
+      : node(qit.node), found(found){};
 
   // getters
   inline QueueNode<T> *get_node() const { return this->node; }
@@ -54,7 +61,7 @@ public:
 
   // equals to
   inline bool operator==(const QueueIterator<T> &other) const {
-    return this->node == other.node;
+    return this->node == other.node && this->found == other.found;
   }
 
   // not equals to
