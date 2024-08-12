@@ -126,8 +126,10 @@ public:
   // min/max find
   T max() const;
   T max(std::function<int(T)> fn) const;
+  T max_if(std::function<bool(T)> fn) const;
   T min() const;
   T min(std::function<int(T)> fn) const;
+  T min_if(std::function<bool(T)> fn) const;
 
   // sorting
   void bubble_sort(std::function<bool(T, T)> comp = std::less<T>());
@@ -786,6 +788,30 @@ template <typename T> T DynamicArray<T>::max(std::function<int(T)> fn) const {
   return max;
 }
 
+// Find max by predicate
+template <typename T>
+T DynamicArray<T>::max_if(std::function<bool(T)> fn) const {
+  if (this->is_empty())
+    throw std::length_error("Array is empty, try to add elements!");
+
+  bool found = false;
+  T max;
+
+  for (int i = 0; i < this->size; i++) {
+    if (fn(this->array[i])) {
+      if (!found || max < this->array[i]) {
+        max = this->array[i];
+        found = true;
+      }
+    }
+  }
+
+  if (!found)
+    throw std::runtime_error("Nothing was found by the given predicate!");
+
+  return max;
+}
+
 // Find min element
 template <typename T> T DynamicArray<T>::min() const {
   if (this->is_empty())
@@ -810,6 +836,30 @@ template <typename T> T DynamicArray<T>::min(std::function<int(T)> fn) const {
     if (fn(min) > fn(this->array[i]))
       min = this->array[i];
   }
+
+  return min;
+}
+
+// Find min element by predicate
+template <typename T>
+T DynamicArray<T>::min_if(std::function<bool(T)> fn) const {
+  if (this->is_empty())
+    throw std::length_error("Array is empty, try to add elements!");
+
+  bool found = false;
+  T min;
+
+  for (int i = 0; i < this->size; i++) {
+    if (fn(this->array[i])) {
+      if (!found || min > this->array[i]) {
+        min = this->array[i];
+        found = true;
+      }
+    }
+  }
+
+  if (!found)
+    throw std::runtime_error("Nothing was found by the given predicate!");
 
   return min;
 }

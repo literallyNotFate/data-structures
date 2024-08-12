@@ -1026,8 +1026,16 @@ TEST(DynamicArrayMinMax, Min) {
   int min = d1.min(), expected = -10;
   EXPECT_EQ(min, expected) << "Values of min and expected min should be equal!";
 
+  int minOdd = d1.min_if([](int x) { return x % 2 != 0; });
+  EXPECT_EQ(minOdd, 1) << "Min odd element in array must be equal to 1!";
+
+  EXPECT_THROW(d1.min_if([](int x) { return x < -20; }), std::runtime_error)
+      << "Should throw runtime_error if nothing was found!";
+
   d1.erase_range(d1.begin(), d1.end());
   EXPECT_THROW(d1.min(), std::length_error)
+      << "Should throw length_error if array is empty!";
+  EXPECT_THROW(d1.min_if([](int x) { return x % 2 == 0; }), std::length_error)
       << "Should throw length_error if array is empty!";
 
   std::vector<std::string> vec2{"abc", "hello", "world", "hi",
@@ -1052,8 +1060,16 @@ TEST(DynamicArrayMinMax, Max) {
   int min = d1.max(), expected = 5;
   EXPECT_EQ(min, expected) << "Values of max and expected max should be equal!";
 
+  int maxEven = d1.max_if([](int x) { return x % 2 == 0; });
+  EXPECT_EQ(maxEven, 2) << "Max even element should be equal to 2!";
+
+  EXPECT_THROW(d1.max_if([](int x) { return x > 10; }), std::runtime_error)
+      << "Should throw runtime_error if nothing was found!";
+
   d1.erase_range(d1.begin(), d1.end());
   EXPECT_THROW(d1.max(), std::length_error)
+      << "Should throw length_error if array is empty!";
+  EXPECT_THROW(d1.max_if([](int x) { return x % 2 != 0; }), std::length_error)
       << "Should throw length_error if array is empty!";
 
   std::vector<std::string> vec2{"abc", "hello", "world", "hi",

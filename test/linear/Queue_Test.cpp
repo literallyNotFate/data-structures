@@ -542,6 +542,50 @@ TEST(QueueMethods, ReplaceRange) {
       << "Should throw length_error if queue is empty!";
 }
 
+TEST(QueueMethods, ToVector) {
+  std::vector<float> vec{1.0, 2.0, 3.0, 4.0};
+  Queue<float> q(vec.begin() + 1, vec.end());
+
+  std::vector<float> result = q.to_vector();
+
+  QueueNode<float> *temp = q.get_head();
+  int index = 1;
+  while (temp != nullptr) {
+    EXPECT_EQ(temp->data, vec[index]) << "Values should be equal!";
+
+    index++;
+    temp = temp->next;
+  }
+}
+
+TEST(QueueMethods, FromVector) {
+  std::vector<char> vec{'a', 'b'};
+  Queue<char> q = Queue<char>::from_vector(vec);
+
+  QueueNode<char> *temp = q.get_head();
+  int index = 0;
+  while (temp != nullptr) {
+    EXPECT_EQ(temp->data, vec[index]) << "Values should be equal!";
+
+    index++;
+    temp = temp->next;
+  }
+}
+
+TEST(QueueMethods, ToString) {
+  std::vector<int> vec{1, 2, 3};
+  Queue<int> q(vec.begin(), vec.end());
+
+  std::string result = q.to_string();
+  std::string expected = "1 -> 2 -> 3";
+
+  EXPECT_EQ(result, expected) << "Strings result and expected should be equal!";
+
+  q.clear();
+  EXPECT_THROW(result = q.to_string(), std::length_error)
+      << "Should throw length_error if queue is empty!";
+}
+
 // ----------
 // Compare test
 // ----------
@@ -632,4 +676,161 @@ TEST(QueueUsefulFunctions, Swap) {
     index++;
     temp = temp->next;
   }
+}
+
+TEST(QueueUsefulFunctions, Count) {
+  Queue<int> q;
+
+  q.enqueue(1);
+  q.enqueue(2);
+  q.enqueue(3);
+  q.enqueue(1);
+  q.enqueue(2);
+
+  EXPECT_EQ(q.count(1), 2) << "Count of element '1' should be 2!";
+  EXPECT_EQ(q.count(3), 1) << "Count of element '3' should be 1!";
+  EXPECT_EQ(q.count(99), 0)
+      << "Count of not found element should be equal to 0!";
+}
+
+TEST(QueueUsefulFunctions, CountIf) {
+  std::vector<std::string> vec{"abc",  "abcde",  "abcdex",
+                               "abce", "123456", "hello"};
+  Queue<std::string> q(vec.begin(), vec.end());
+
+  int count = q.count_if([](std::string str) { return str.size() >= 5; });
+  EXPECT_EQ(count, 4) << "Number of strings that have length >= 5 should be 4!";
+
+  count = q.count_if([](std::string str) { return str.size() == 0; });
+  EXPECT_EQ(count, 0) << "If elements were not found by predicate return 0!";
+}
+
+TEST(QueueUsefulFunctions, Reverse) {
+  std::vector<int> vec{1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+  Queue<int> q1(vec), q2(q1);
+
+  std::vector<int> expected{10, 9, 8, 7, 6, 5, 4, 3, 2, 1};
+
+  q1.reverse();
+  q2 = q2.reversed();
+
+  int index = 0;
+  QueueNode<int> *temp1 = q1.get_head(), *temp2 = q2.get_head();
+  while (temp1 != nullptr && temp2 != nullptr) {
+    EXPECT_EQ(temp1->data, expected[index]) << "Values should be equal!";
+    EXPECT_EQ(temp2->data, expected[index]) << "Values should be equal!";
+
+    ++index;
+    temp1 = temp1->next;
+    temp2 = temp2->next;
+  }
+}
+
+TEST(QueueUsefulFunctions, RemoveDuplicates) {
+  std::vector<int> vec{1, 1, 2, 2, 3, 3};
+  Queue<int> q(vec);
+
+  q.remove_duplicates();
+  std::vector<int> expected{1, 2, 3};
+
+  QueueNode<int> *temp = q.get_head();
+  int index = 0;
+  while (temp != nullptr) {
+    EXPECT_EQ(temp->data, expected[index]) << "Values should be equal!";
+
+    ++index;
+    temp = temp->next;
+  }
+
+  q.clear();
+  EXPECT_THROW(q.remove_duplicates(), std::length_error)
+      << "Should throw length_error if queue is empty!";
+}
+
+TEST(QueueUsefulFunctions, Filter) {
+  std::vector<int> vec{-1, 2, -3, 4, -5, 6, -7, 8, -9, 10};
+  Queue<int> q(vec);
+
+  Queue<int> filtered = q.filter([](int x) { return x < 0; });
+  std::vector<int> expected{-1, -3, -5, -7, -9};
+
+  QueueNode<int> *temp = filtered.get_head();
+  int index = 0;
+  while (temp != nullptr) {
+    EXPECT_EQ(temp->data, expected[index]) << "Values should be equal!";
+
+    ++index;
+    temp = temp->next;
+  }
+}
+
+// ----------
+// Finding min/max test
+// ----------
+
+TEST(QueueMinMax, Min) {
+  std::vector<int> vec1{1, 2, 10, 15, 20, 2, 100, -10, -5, 20, 30};
+  Queue<int> q1(vec1);
+
+  QueueNode<int> *minVal = q1.min();
+  EXPECT_EQ(minVal->data, -10) << "Min value should be -10!";
+
+  QueueNode<int> *minOdd = q1.min_if([](int x) { return x % 2 != 0; });
+  EXPECT_EQ(minOdd->data, -5) << "Min odd values should be -5!";
+
+  EXPECT_THROW(q1.min_if([](int x) { return x > 200; }), std::runtime_error)
+      << "Should throw runtime_error if nothing was found!";
+
+  q1.clear();
+  EXPECT_THROW(minVal = q1.min(), std::length_error)
+      << "Should throw length_error if queue is empty!";
+  EXPECT_THROW(q1.min_if([](int x) { return x % 2 == 0; }), std::length_error)
+      << "Should throw length_error if queue is empty!";
+
+  std::vector<std::string> vec2{"abc", "hello", "a", "123456"};
+  Queue<std::string> q2(vec2);
+
+  QueueNode<std::string> *minSize =
+      q2.min([](std::string str) { return str.size(); });
+  EXPECT_EQ(minSize->data, "a")
+      << "Min size of a string in queue must be: 'a'!";
+
+  q2.clear();
+  EXPECT_THROW(q2.min([](std::string str) { return str.size(); }),
+               std::length_error)
+      << "Should throw length_error if queue is empty!";
+}
+
+TEST(QueueMinMax, Max) {
+  std::vector<int> vec1{1, 2, 10, 20, 3, 5, 0, 20};
+  Queue<int> q1(vec1);
+
+  QueueNode<int> *maxVal = q1.max();
+  EXPECT_EQ(maxVal->data, 20) << "Max value should be 20!";
+
+  QueueNode<int> *maxOdd = q1.max_if([](int x) { return x % 2 != 0; });
+  EXPECT_EQ(maxOdd->data, 5) << "Max odd value should be 5!";
+
+  EXPECT_THROW(q1.max_if([](int x) { return x < 0; }), std::runtime_error)
+      << "Should throw runtime_error if nothing was found!";
+
+  q1.clear();
+  EXPECT_THROW(maxVal = q1.max(), std::length_error)
+      << "Should throw length_error if queue is empty!";
+  EXPECT_THROW(maxOdd = q1.max([](int x) { return x % 2 == 0; }),
+               std::length_error)
+      << "Should throw length_error if queue is empty!";
+
+  std::vector<std::string> vec2{"a", "abc", "hello"};
+  Queue<std::string> q2(vec2);
+
+  QueueNode<std::string> *maxSize =
+      q2.max([](std::string str) { return str.size(); });
+  EXPECT_EQ(maxSize->data, "hello")
+      << "String with max string size will be 'hello'!";
+
+  q2.clear();
+  EXPECT_THROW(maxSize = q2.max([](std::string str) { return str.size(); }),
+               std::length_error)
+      << "Should throw length_error if queue is empty!";
 }

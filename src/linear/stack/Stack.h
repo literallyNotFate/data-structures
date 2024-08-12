@@ -97,8 +97,10 @@ public:
   // min/max find
   T max() const;
   T max(std::function<int(T)> fn) const;
+  T max_if(std::function<bool(T)> fn) const;
   T min() const;
   T min(std::function<int(T)> fn) const;
+  T min_if(std::function<bool(T)> fn) const;
 
   // iterators
   inline Iterator<T> begin() const {
@@ -576,6 +578,29 @@ template <typename T> T Stack<T>::max(std::function<int(T)> fn) const {
   return max;
 }
 
+// Find max by predicate
+template <typename T> T Stack<T>::max_if(std::function<bool(T)> fn) const {
+  if (this->is_empty())
+    throw std::underflow_error("Stack underflow!");
+
+  bool found = false;
+  T max;
+
+  for (int i = 0; i < this->get_size(); i++) {
+    if (fn(this->stack[i])) {
+      if (!found || max < this->stack[i]) {
+        max = this->stack[i];
+        found = true;
+      }
+    }
+  }
+
+  if (!found)
+    throw std::runtime_error("Nothing was found by the given predicate!");
+
+  return max;
+}
+
 // Find min element
 template <typename T> T Stack<T>::min() const {
   if (this->is_empty())
@@ -600,6 +625,29 @@ template <typename T> T Stack<T>::min(std::function<int(T)> fn) const {
     if (fn(min) > fn(this->stack[i]))
       min = this->stack[i];
   }
+
+  return min;
+}
+
+// Find min element by predicate
+template <typename T> T Stack<T>::min_if(std::function<bool(T)> fn) const {
+  if (this->is_empty())
+    throw std::underflow_error("Stack underflow!");
+
+  bool found = false;
+  T min;
+
+  for (int i = 0; i < this->get_size(); i++) {
+    if (fn(this->stack[i])) {
+      if (!found || min > this->stack[i]) {
+        min = this->stack[i];
+        found = true;
+      }
+    }
+  }
+
+  if (!found)
+    throw std::runtime_error("Nothing was found by the given predicate!");
 
   return min;
 }

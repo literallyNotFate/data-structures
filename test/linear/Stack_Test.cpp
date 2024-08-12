@@ -709,8 +709,17 @@ TEST(StackMinMax, Min) {
   int min1 = s1.min();
   EXPECT_EQ(min1, 1) << "Min element in the stack should be equal to 1!";
 
+  int minEven = s1.min_if([](int x) { return x % 2 == 0; });
+  EXPECT_EQ(minEven, 2) << "Min even element equals to 2!";
+
+  EXPECT_THROW(s1.min_if([](int x) { return x < 0; }), std::runtime_error)
+      << "Should throw runtime_error if nothing was found!";
+
   s1.erase_range(s1.begin(), s1.end());
   EXPECT_THROW(s1.min(), std::underflow_error)
+      << "Should throw underflow_error if stack is empty!";
+  EXPECT_THROW(s1.min_if([](int x) { return x % 2 != 0; }),
+               std::underflow_error)
       << "Should throw underflow_error if stack is empty!";
 
   std::vector<std::string> vec2{"abc", "def", "hello", "hi", "yo", "world"};
@@ -732,8 +741,17 @@ TEST(StackMinMax, Max) {
   int max1 = s1.max();
   EXPECT_EQ(max1, 10) << "Max element in the stack should be equal to 10!";
 
+  int maxOdd = s1.max_if([](int x) { return x % 2 != 0; });
+  EXPECT_EQ(maxOdd, 7) << "Max odd element equals to 7!";
+
+  EXPECT_THROW(s1.max_if([](int x) { return x < 0; }), std::runtime_error)
+      << "Should throw runtime_error if nothing was found!";
+
   s1.erase_range(s1.begin(), s1.end());
   EXPECT_THROW(s1.max(), std::underflow_error)
+      << "Should throw underflow_error if stack is empty!";
+  EXPECT_THROW(s1.max_if([](int x) { return x % 2 != 0; }),
+               std::underflow_error)
       << "Should throw underflow_error if stack is empty!";
 
   std::vector<std::string> vec2{"abc", "def", "hello", "hi", "yo", "world"};

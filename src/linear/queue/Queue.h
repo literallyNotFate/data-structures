@@ -3,7 +3,9 @@
 
 #include <QueueIterator.h>
 
+#include <functional>
 #include <iostream>
+#include <sstream>
 #include <stdexcept>
 #include <vector>
 
@@ -78,9 +80,30 @@ public:
   void replace_range(const QueueIterator<T> qit1, const QueueIterator<T> qit2,
                      const T &replace);
 
+  // converting methods
+  const std::vector<T> to_vector() const;
+  static inline Queue<T> from_vector(const std::vector<T> &vec) {
+    return Queue<T>(vec);
+  }
+  const std::string to_string() const;
+
   // useful methods
+  int count(const T &element) const;
+  int count_if(std::function<bool(T)> fn) const;
+  Queue<T> filter(std::function<bool(T)> fn) const;
   void clear();
   static void swap(Queue<T> &a, Queue<T> &b);
+  void reverse();
+  Queue<T> reversed() const;
+  void remove_duplicates();
+
+  // min/max find
+  QueueNode<T> *max() const;
+  QueueNode<T> *max(std::function<int(T)> fn) const;
+  QueueNode<T> *max_if(std::function<bool(T)> fn) const;
+  QueueNode<T> *min() const;
+  QueueNode<T> *min(std::function<int(T)> fn) const;
+  QueueNode<T> *min_if(std::function<bool(T)> fn) const;
 
   // iterators
   inline QueueIterator<T> begin() const { return QueueIterator<T>(this->head); }
@@ -517,6 +540,38 @@ void Queue<T>::replace_range(const QueueIterator<T> qit1,
   *qit2 = replace;
 }
 
+// To vector
+template <typename T> const std::vector<T> Queue<T>::to_vector() const {
+  std::vector<T> vec;
+  QueueNode<T> *temp = this->head;
+
+  while (temp != nullptr) {
+    vec.push_back(temp->data);
+    temp = temp->next;
+  }
+
+  return vec;
+}
+
+// To string
+template <typename T> const std::string Queue<T>::to_string() const {
+  if (this->is_empty())
+    throw std::length_error("Queue is empty!");
+
+  std::stringstream ss;
+  QueueNode<T> *temp = this->head;
+
+  while (temp != nullptr) {
+    ss << temp->data;
+    if (temp->next != nullptr)
+      ss << " -> ";
+
+    temp = temp->next;
+  }
+
+  return ss.str();
+}
+
 // ---------
 // Useful methods
 // ---------
@@ -534,6 +589,246 @@ template <typename T> void Queue<T>::swap(Queue<T> &a, Queue<T> &b) {
   Queue<T> temp = a;
   a = b;
   b = temp;
+}
+
+// Count element in the queue
+template <typename T> int Queue<T>::count(const T &element) const {
+  int count = 0;
+  QueueNode<T> *temp = this->head;
+
+  while (temp != nullptr) {
+    if (temp->data == element)
+      ++count;
+
+    temp = temp->next;
+  }
+
+  return count;
+}
+
+// Count element in the queue by predicate
+template <typename T> int Queue<T>::count_if(std::function<bool(T)> fn) const {
+  int count = 0;
+  QueueNode<T> *temp = this->head;
+
+  while (temp != nullptr) {
+    if (fn(temp->data))
+      ++count;
+
+    temp = temp->next;
+  }
+
+  return count;
+}
+
+// Filter elements in the queue
+template <typename T>
+Queue<T> Queue<T>::filter(std::function<bool(T)> fn) const {
+  Queue<T> result;
+  QueueNode<T> *temp = this->head;
+
+  while (temp != nullptr) {
+    if (fn(temp->data))
+      result.enqueue(temp->data);
+
+    temp = temp->next;
+  }
+
+  return result;
+}
+
+// Reverse a list
+template <typename T> void Queue<T>::reverse() {
+  if (this->is_empty())
+    throw std::length_error("Queue is empty!");
+
+  QueueNode<T> *temp = nullptr, *prev = nullptr, *current = this->head;
+
+  while (current != nullptr) {
+    temp = current->next;
+    current->next = prev;
+    prev = current;
+    current = temp;
+  }
+
+  this->head = prev;
+}
+
+// Return a reversed list
+template <typename T> Queue<T> Queue<T>::reversed() const {
+  if (this->is_empty())
+    throw std::length_error("Queue is empty!");
+
+  Queue<T> result;
+  QueueNode<T> *temp = this->head;
+
+  while (temp != nullptr) {
+    QueueNode<T> *add = new QueueNode<T>(temp->data);
+    if (result.is_empty()) {
+      result.head = result.tail = add;
+    } else {
+      add->next = result.head;
+      result.head = add;
+    }
+
+    ++result.length;
+    temp = temp->next;
+  }
+
+  return result;
+}
+
+// Remove duplicates from queue
+template <typename T> void Queue<T>::remove_duplicates() {
+  if (this->is_empty())
+    throw std::length_error("Queue is empty!");
+
+  QueueNode<T> *temp1 = this->head, *temp2, *duplicate;
+
+  while (temp1 != nullptr && temp1->next != nullptr) {
+    temp2 = temp1;
+
+    while (temp2->next != nullptr) {
+      if (temp1->data == temp2->next->data) {
+        duplicate = temp2->next;
+        temp2->next = temp2->next->next;
+        delete duplicate;
+      } else
+        temp2 = temp2->next;
+    }
+
+    temp1 = temp1->next;
+  }
+}
+
+//----------
+// Min/max
+// ----------
+
+// Find max element
+template <typename T> QueueNode<T> *Queue<T>::max() const {
+  if (this->is_empty())
+    throw std::length_error("Queue is empty!");
+
+  QueueNode<T> *temp = this->head;
+  QueueNode<T> *max = this->head;
+
+  while (temp != nullptr) {
+    if (max->data < temp->data)
+      max = temp;
+
+    temp = temp->next;
+  }
+
+  return max;
+}
+
+// Find max element by key
+template <typename T>
+QueueNode<T> *Queue<T>::max(std::function<int(T)> fn) const {
+  if (this->is_empty())
+    throw std::length_error("Queue is empty!");
+
+  QueueNode<T> *temp = this->head;
+  QueueNode<T> *max = this->head;
+
+  while (temp != nullptr) {
+    if (fn(max->data) < fn(temp->data))
+      max = temp;
+
+    temp = temp->next;
+  }
+
+  return max;
+}
+
+// Find max element by predicate
+template <typename T>
+QueueNode<T> *Queue<T>::max_if(std::function<bool(T)> fn) const {
+  if (this->is_empty())
+    throw std::length_error("Queue is empty!");
+
+  bool found = false;
+  QueueNode<T> *temp = this->head, *max;
+
+  while (temp != nullptr) {
+    if (fn(temp->data)) {
+      if (!found || max->data < temp->data) {
+        max = temp;
+        found = true;
+      }
+    }
+
+    temp = temp->next;
+  }
+
+  if (!found)
+    throw std::runtime_error("Nothing was found by the given predicate!");
+
+  return max;
+}
+
+// Find min element
+template <typename T> QueueNode<T> *Queue<T>::min() const {
+  if (this->is_empty())
+    throw std::length_error("Queue is empty!");
+
+  QueueNode<T> *temp = this->head;
+  QueueNode<T> *min = this->head;
+
+  while (temp != nullptr) {
+    if (min->data > temp->data)
+      min = temp;
+
+    temp = temp->next;
+  }
+
+  return min;
+}
+
+// Find min element by key
+template <typename T>
+QueueNode<T> *Queue<T>::min(std::function<int(T)> fn) const {
+  if (this->is_empty())
+    throw std::length_error("Queue is empty!");
+
+  QueueNode<T> *temp = this->head;
+  QueueNode<T> *min = this->head;
+
+  while (temp != nullptr) {
+    if (fn(min->data) > fn(temp->data))
+      min = temp;
+
+    temp = temp->next;
+  }
+
+  return min;
+}
+
+// Find min element by predicate
+template <typename T>
+QueueNode<T> *Queue<T>::min_if(std::function<bool(T)> fn) const {
+  if (this->is_empty())
+    throw std::length_error("Queue is empty!");
+
+  bool found = false;
+  QueueNode<T> *temp = this->head, *min;
+
+  while (temp != nullptr) {
+    if (fn(temp->data)) {
+      if (!found || min->data > temp->data) {
+        min = temp;
+        found = true;
+      }
+    }
+
+    temp = temp->next;
+  }
+
+  if (!found)
+    throw std::runtime_error("Nothing was found by the given predicate!");
+
+  return min;
 }
 
 // ---------
