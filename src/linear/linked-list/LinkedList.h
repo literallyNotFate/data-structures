@@ -2,6 +2,7 @@
 #define LINKEDLIST_H
 
 #include <iostream>
+#include <sstream>
 #include <stdexcept>
 #include <vector>
 
@@ -48,11 +49,24 @@ public:
   // adding to the list
   void push_end(const T &element);
   void push_begin(const T &element);
+  void push_after(const ListNode<T> *node, const T &element);
+  void push_before(const ListNode<T> *node, const T &element);
+  void push_index(const int index, const T &element);
+  void push_random(const T &element);
+  void push_middle(const T &element);
+  void push_vector(const int index, const std::vector<T> &vec);
 
   // erasing from the list
   inline void remove_end() { this->remove_node(this->tail); };
   void remove_begin();
-  void remove_node(ListNode<T> *node);
+  void remove_node(const ListNode<T> *node);
+
+  // converting methods
+  const std::vector<T> to_vector(const bool order = true) const;
+  static inline LinkedList<T> from_vector(const std::vector<T> &vec) {
+    return LinkedList<T>(vec);
+  }
+  const std::string to_string(const bool order = true) const;
 
   // useful methods
   void clear();
@@ -144,6 +158,167 @@ template <typename T> void LinkedList<T>::push_begin(const T &element) {
   this->head = this->head->prev = add;
 }
 
+// Push element after specific node
+template <typename T>
+void LinkedList<T>::push_after(const ListNode<T> *node, const T &element) {
+  if (this->is_empty())
+    throw std::length_error("List is empty!");
+
+  if (node == nullptr)
+    throw std::invalid_argument("Provided node is null!");
+
+  ListNode<T> *add = new ListNode<T>(element);
+  ListNode<T> *temp = this->head;
+
+  while (temp != nullptr && temp != node)
+    temp = temp->next;
+
+  if (temp == nullptr)
+    throw std::invalid_argument("Provided node was not found in the list!");
+
+  add->next = temp->next;
+  add->prev = temp;
+  temp->next = add;
+
+  ++this->length;
+
+  if (temp == this->tail)
+    this->tail = add;
+
+  if (add->next != nullptr)
+    add->next->prev = add;
+}
+
+// Push element before specific node
+template <typename T>
+void LinkedList<T>::push_before(const ListNode<T> *node, const T &element) {
+  if (this->is_empty())
+    throw std::length_error("List is empty!");
+
+  if (node == nullptr)
+    throw std::invalid_argument("Provided node is null!");
+
+  ListNode<T> *add = new ListNode<T>(element);
+  ListNode<T> *temp = this->head;
+
+  while (temp != nullptr && temp != node)
+    temp = temp->next;
+
+  if (temp == nullptr)
+    throw std::invalid_argument("Provided node was not found in the list!");
+
+  add->prev = temp->prev;
+  add->next = temp;
+
+  ++this->length;
+
+  if (temp->prev != NULL) {
+    add->prev->next = add;
+  } else {
+    this->head = add;
+  }
+
+  temp->prev = add;
+}
+
+// Push element at given position (index)
+template <typename T>
+void LinkedList<T>::push_index(const int index, const T &element) {
+  if (this->is_empty())
+    throw std::length_error("List is empty!");
+
+  if (index < 0 || index > this->length)
+    throw std::out_of_range("Provided index is out of range!");
+
+  ListNode<T> *add = new ListNode<T>(element);
+  ListNode<T> *temp = this->head;
+
+  if (index == 0) {
+    this->push_begin(element);
+    return;
+  }
+
+  if (index == this->length - 1) {
+    this->push_end(element);
+    return;
+  }
+
+  for (int i = 1; i < index && temp != nullptr; ++i)
+    temp = temp->next;
+
+  add->prev = temp;
+  add->next = temp->next;
+  temp->next = add;
+
+  ++this->length;
+
+  if (add->next != NULL)
+    add->next->prev = add;
+}
+
+// Push element at the middle of a list
+template <typename T> void LinkedList<T>::push_middle(const T &element) {
+  if (this->is_empty()) {
+    this->push_begin(element);
+    return;
+  }
+
+  if (this->length == 1) {
+    this->push_end(element);
+    return;
+  }
+
+  ListNode<T> *add = new ListNode<T>(element);
+
+  ListNode<T> *temp = head;
+  for (size_t i = 0; i < (this->length - 1) / 2; ++i)
+    temp = temp->next;
+
+  add->next = temp->next;
+  add->prev = temp;
+
+  if (temp->next != nullptr)
+    temp->next->prev = add;
+
+  temp->next = add;
+
+  if (temp == this->tail)
+    this->tail = add;
+
+  ++this->length;
+}
+
+// Push element at the random place
+template <typename T> void LinkedList<T>::push_random(const T &element) {
+  if (this->is_empty()) {
+    this->push_begin(element);
+    return;
+  }
+
+  static bool seed_initialized = false;
+  if (!seed_initialized) {
+    std::srand(static_cast<unsigned>(std::time(0)));
+    seed_initialized = true;
+  }
+
+  this->push_index(std::rand() % this->length, element);
+}
+
+// Push vector at the given position
+template <typename T>
+void LinkedList<T>::push_vector(const int index, const std::vector<T> &vec) {
+  if (this->is_empty())
+    throw std::length_error("List is empty!");
+
+  if (index < 0 || index > this->length - 1)
+    throw std::out_of_range("Provided index is out of range!");
+
+  int i = index;
+  for (const T &element : vec) {
+    this->push_index(i++, element);
+  }
+}
+
 // Remove front
 template <typename T> void LinkedList<T>::remove_begin() {
   if (this->is_empty())
@@ -160,7 +335,7 @@ template <typename T> void LinkedList<T>::remove_begin() {
 }
 
 // Remove provided node
-template <typename T> void LinkedList<T>::remove_node(ListNode<T> *node) {
+template <typename T> void LinkedList<T>::remove_node(const ListNode<T> *node) {
   if (this->is_empty())
     throw std::length_error("List is empty!");
 
@@ -197,6 +372,40 @@ LinkedList<T> &LinkedList<T>::operator=(const LinkedList<T> &other) {
   }
 
   return *this;
+}
+
+// To vector
+template <typename T>
+const std::vector<T> LinkedList<T>::to_vector(const bool order) const {
+  std::vector<T> vec;
+  ListNode<T> *temp = order ? this->head : this->tail;
+
+  while (temp != nullptr) {
+    vec.push_back(temp->data);
+    temp = order ? temp->next : temp->prev;
+  }
+
+  return vec;
+}
+
+// To string
+template <typename T>
+const std::string LinkedList<T>::to_string(const bool order) const {
+  if (this->is_empty())
+    throw std::length_error("Queue is empty!");
+
+  std::stringstream ss;
+  ListNode<T> *temp = order ? this->head : this->tail;
+
+  while (temp != nullptr) {
+    ss << temp->data;
+    if ((order ? temp->next : temp->prev) != nullptr)
+      ss << " <-> ";
+
+    temp = order ? temp->next : temp->prev;
+  }
+
+  return ss.str();
 }
 
 // ---------
