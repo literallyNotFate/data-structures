@@ -78,7 +78,7 @@ cd build/test
 Replace \`your_test_executable\` with the actual name of your test executable.
 In our case is: ./data-structures_test
 
-## With the ctest command (more convenient)
+## With the ctest command
 
 1. **To run all tests that are in the \`build/test\` folder, use this:
 You can also add --verbose flag.**
@@ -108,7 +108,38 @@ Replace \`TestSuite\` with the test suite (e.g. DynamicArrayCompare)
 ```bash
 GTEST_COLOR=1 ctest --test-dir build/test --output-on-failure -R TestSuite.Method -j12
 ```
-Replace \`TestSuite\` with the test suite (e.g. QueueMethods) and \`Method\` with the testing method (e.g Contains).
+
+Replace c with the test suite (e.g. QueueMethods) and \`Method\` with the testing method (e.g Contains).
+
+## Through shell script (run.sh)
+
+Shell script builds the project for you and allows you to run the executable or tests without building it manually.
+To get started, you need to run the following command in the terminal to make the script executable:
+
+```bash
+chmod +x run.sh
+```
+
+Now you are able to run the script. There are the features:
+
+1. **To run the project executable:**
+
+```bash
+./run.sh run
+```
+
+2. **To run all the tests:**
+
+```bash
+./run.sh tests
+```
+
+3. **To run tests for specific data structure:**
+
+```bash
+./run.sh tests Structure
+```
+Replace \`Structure\` with the available data structure. Otherwise, it will throw an error.
 
 ---
 
