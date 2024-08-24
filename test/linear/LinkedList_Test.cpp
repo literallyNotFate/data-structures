@@ -430,6 +430,26 @@ TEST(LinkedListModify, RemoveNode) {
 }
 
 // ----------
+// Iterators test
+// ----------
+
+TEST(ListIterators, IteratorBegin) {
+  std::vector<int> vec{5, 4, 3, 2, 1};
+  LinkedList<int> l(vec);
+
+  ListIterator<int> lit = l.begin();
+  EXPECT_EQ(*lit, 5) << "Begin iterator should be at the first element!";
+}
+
+TEST(ListIterators, IteratorEnd) {
+  std::vector<int> vec{5, 4, 3, 2, 1};
+  LinkedList<int> l(vec);
+
+  ListIterator<int> lit = l.end();
+  EXPECT_EQ(*lit, 1) << "End iterator should be pointing at the last element!";
+}
+
+// ----------
 // Methods test
 // ----------
 

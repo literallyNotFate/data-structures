@@ -36,6 +36,7 @@ public:
 
   // get operator
   inline T &operator*() const { return this->node->data; }
+  inline T *operator->() const { return &(this->node->data); }
 
   // adding operation
   inline QueueIterator<T> operator+(const int &value) const {

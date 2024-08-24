@@ -1,6 +1,8 @@
 #ifndef LINKEDLIST_H
 #define LINKEDLIST_H
 
+#include <ListIterator.h>
+
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
@@ -70,6 +72,10 @@ public:
 
   // useful methods
   void clear();
+
+  // iterators
+  inline ListIterator<T> begin() const { return ListIterator<T>(this->head); }
+  inline ListIterator<T> end() const { return ListIterator<T>(this->tail); }
 
   // compare methods
   bool operator>(const LinkedList<T> &other) const;

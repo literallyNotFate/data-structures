@@ -45,12 +45,19 @@ public:
     return *this;
   }
 
-  // get operator
+  // get operatorы
   inline T &operator*() const {
     if (this->index < 0 || this->index > this->size)
       throw std::out_of_range("Index is out of range!");
 
     return this->iter[this->index];
+  }
+
+  inline T *operator->() const {
+    if (this->index < 0 || this->index >= this->size)
+      throw std::out_of_range("Index is out of range!");
+
+    return &this->iter[this->index];
   }
 
   // adding operation

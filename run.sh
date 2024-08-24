@@ -4,7 +4,7 @@ set -e
 
 BUILD_DIR="build"
 EXECUTABLE_NAME="data-structures"
-VALID_TESTS=("DynamicArray" "Stack" "Queue" "LinkedList")
+VALID_TESTS=("DynamicArray" "Stack" "Queue" "LinkedList" "Iterator" "QueueIterator" "ListIterator")
 
 if [ ! -d "$BUILD_DIR" ]; then
     mkdir "$BUILD_DIR"

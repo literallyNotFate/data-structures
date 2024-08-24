@@ -15,6 +15,7 @@ target_include_directories(${BINARY} PUBLIC
     ${PROJECT_SOURCE_DIR}/src/linear/linked-list
     ${PROJECT_SOURCE_DIR}/src/utils/iterator
     ${PROJECT_SOURCE_DIR}/src/utils/queue-iterator
+    ${PROJECT_SOURCE_DIR}/src/utils/list-iterator
 )
 
 

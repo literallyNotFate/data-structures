@@ -91,6 +91,30 @@ TEST(IteratorMethods, DereferenceOperator) {
   EXPECT_EQ(*it, 3) << "Should return element of index 3!";
 }
 
+TEST(IteratorMethods, ArrowOperator) {
+  class Person {
+  public:
+    const char *name;
+    int age;
+
+    Person() : name("Default"), age(0) {};
+    Person(const char *name, int age) : name(name), age(age) {};
+  };
+
+  int size = 3;
+  Person *person_array = new Person[size]{
+      Person("John", 20), Person("Mike", 19), Person("Kyle", 15)};
+  Iterator<Person> it(person_array, size);
+
+  int *ages = new int[size]{20, 19, 15};
+  const char **names = new const char *[size] { "John", "Mike", "Kyle" };
+
+  for (int i = 0; i < size; ++i, ++it) {
+    EXPECT_EQ(it->name, names[i]) << "Names should be equal!";
+    EXPECT_EQ(it->age, ages[i]) << "Ages should be equal!";
+  }
+}
+
 TEST(IteratorMethods, AdditionOperator) {
   int size = 7;
   int *int_array = new int[size]{1, 2, 3, 4, 5, 6, 7};

@@ -44,8 +44,7 @@ TEST(QueueIteratorMethods, IncrementOperator) {
 
   int n = 3, index = 0;
   while (n > 0) {
-    EXPECT_EQ(qit.get_node()->data, expected[index])
-        << "Values should be equal!";
+    EXPECT_EQ(*qit, expected[index]) << "Values should be equal!";
 
     index++;
     ++qit;
@@ -62,6 +61,24 @@ TEST(QueueIteratorMethods, DereferenceOperator) {
 
   ++qit;
   EXPECT_EQ(*qit, vec[1]) << "Iterator should be at 2nd element";
+}
+
+TEST(QueueIteratorMethods, ArrowOperator) {
+  class Balance {
+  public:
+    int money;
+    Balance(int m) : money(m) {};
+  };
+
+  std::vector<Balance> vec{Balance(2000), Balance(15000), Balance(30000),
+                           Balance(4000), Balance(7500)};
+  Queue<Balance> q(vec);
+  QueueIterator<Balance> qit(q);
+
+  int *balances = new int[vec.size()]{2000, 15000, 30000, 4000, 7500};
+
+  for (int i = 0; i < vec.size(); ++i, ++qit)
+    EXPECT_EQ(qit->money, balances[i]) << "Values should be equal!";
 }
 
 TEST(QueueIteratorMethods, AdditionOperator) {
