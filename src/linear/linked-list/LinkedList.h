@@ -3,6 +3,7 @@
 
 #include <ListIterator.h>
 
+#include <functional>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
@@ -44,9 +45,12 @@ public:
   inline ListNode<T> *get_head() const { return this->head; }
   inline ListNode<T> *get_tail() const { return this->tail; }
   inline int get_length() const { return this->length; }
+  ListNode<T> *get_node_by_value(const T &element) const;
+  ListNode<T> *get_node_by_index(const int index) const;
 
   // bool methods
   inline bool is_empty() const { return this->head == nullptr; }
+  bool contains(const ListNode<T> *node) const;
 
   // adding to the list
   void push_end(const T &element);
@@ -58,10 +62,20 @@ public:
   void push_middle(const T &element);
   void push_vector(const int index, const std::vector<T> &vec);
 
-  // erasing from the list
+  // removing from the list
   inline void remove_end() { this->remove_node(this->tail); };
   void remove_begin();
   void remove_node(const ListNode<T> *node);
+  void remove_after(const ListNode<T> *node);
+  void remove_before(const ListNode<T> *node);
+  inline void remove_value(const T &element) {
+    this->remove_node(this->get_node_by_value(element));
+  }
+  void remove_all(const T &element);
+  inline void remove_index(const int &index) {
+    this->remove_node(this->get_node_by_index(index));
+  }
+  void remove_if(std::function<bool(T)> fn);
 
   // converting methods
   const std::vector<T> to_vector(const bool order = true) const;
@@ -275,8 +289,8 @@ template <typename T> void LinkedList<T>::push_middle(const T &element) {
   }
 
   ListNode<T> *add = new ListNode<T>(element);
+  ListNode<T> *temp = this->head;
 
-  ListNode<T> *temp = head;
   for (size_t i = 0; i < (this->length - 1) / 2; ++i)
     temp = temp->next;
 
@@ -325,7 +339,7 @@ void LinkedList<T>::push_vector(const int index, const std::vector<T> &vec) {
   }
 }
 
-// Remove front
+// Remove first node of the list
 template <typename T> void LinkedList<T>::remove_begin() {
   if (this->is_empty())
     throw std::length_error("List is empty!");
@@ -348,6 +362,14 @@ template <typename T> void LinkedList<T>::remove_node(const ListNode<T> *node) {
   if (node == nullptr)
     throw std::invalid_argument("Provided node is null!");
 
+  ListNode<T> *temp = this->head;
+
+  while (temp != nullptr && temp != node)
+    temp = temp->next;
+
+  if (temp == nullptr)
+    throw std::invalid_argument("Provided node was not found in the list!");
+
   if (this->head == node)
     this->head = node->next;
 
@@ -362,6 +384,131 @@ template <typename T> void LinkedList<T>::remove_node(const ListNode<T> *node) {
 
   --this->length;
   delete node;
+}
+
+// Remove node before provided node
+template <typename T>
+void LinkedList<T>::remove_before(const ListNode<T> *node) {
+  if (this->is_empty())
+    throw std::length_error("List is empty!");
+
+  if (node == nullptr)
+    throw std::invalid_argument("Provided node is null!");
+
+  ListNode<T> *del = node->prev;
+
+  if (del == nullptr)
+    throw std::invalid_argument("No node exists before the provided node!");
+
+  if (del->next != nullptr)
+    del->next->prev = del->prev;
+
+  if (del->prev != nullptr)
+    del->prev->next = del->next;
+
+  if (this->head == del)
+    this->head = del->next;
+
+  --this->length;
+  delete del;
+}
+
+// Remove node after provided node
+template <typename T>
+void LinkedList<T>::remove_after(const ListNode<T> *node) {
+  if (this->is_empty())
+    throw std::length_error("List is empty!");
+
+  if (node == nullptr)
+    throw std::invalid_argument("Provided node is null!");
+
+  ListNode<T> *del = node->next;
+
+  if (del == nullptr)
+    throw std::invalid_argument("No node exists after the provided node!");
+
+  if (del->next != nullptr)
+    del->next->prev = del->prev;
+
+  if (del->prev != nullptr)
+    del->prev->next = del->next;
+
+  if (this->tail == del)
+    this->tail = del->prev;
+
+  --this->length;
+  delete del;
+}
+
+// Remove all elements of an value
+template <typename T> void LinkedList<T>::remove_all(const T &element) {
+  if (this->is_empty())
+    throw std::length_error("List is empty!");
+
+  ListNode<T> *temp = this->head;
+  bool found = false;
+
+  while (temp != nullptr) {
+    if (temp->data == element) {
+      ListNode<T> *del = temp;
+      found = true;
+
+      if (temp->next)
+        temp->next->prev = temp->prev;
+
+      if (temp->prev) {
+        temp->prev->next = temp->next;
+        temp = temp->next;
+      } else {
+        this->head = temp->next;
+        temp = this->head;
+      }
+
+      delete del;
+      --this->length;
+    } else {
+      temp = temp->next;
+    }
+  }
+
+  if (!found)
+    throw std::invalid_argument("Node with provided value was not found!");
+}
+
+// Remove by predicate
+template <typename T> void LinkedList<T>::remove_if(std::function<bool(T)> fn) {
+  if (this->is_empty())
+    throw std::length_error("List is empty!");
+
+  ListNode<T> *temp = this->head;
+
+  while (temp != nullptr) {
+    ListNode<T> *next = temp->next;
+    if (fn(temp->data))
+      this->remove_node(temp);
+
+    temp = next;
+  }
+}
+
+// If provided node is in the list
+template <typename T>
+bool LinkedList<T>::contains(const ListNode<T> *node) const {
+  if (this->is_empty())
+    throw std::length_error("List is empty!");
+
+  if (node == nullptr)
+    throw std::invalid_argument("Provided node is null!");
+
+  ListNode<T> *temp = this->head;
+  while (temp != nullptr) {
+    if (temp->data == node->data)
+      return true;
+
+    temp = temp->next;
+  }
+
+  return false;
 }
 
 // Equal operator
@@ -412,6 +559,39 @@ const std::string LinkedList<T>::to_string(const bool order) const {
   }
 
   return ss.str();
+}
+
+// Get node by value
+template <typename T>
+ListNode<T> *LinkedList<T>::get_node_by_value(const T &element) const {
+  if (this->is_empty())
+    throw std::length_error("List is empty!");
+
+  ListNode<T> *temp = this->head;
+  while (temp != nullptr && temp->data != element)
+    temp = temp->next;
+
+  if (temp == nullptr)
+    throw std::invalid_argument("Node by provided value was not found!");
+
+  return temp;
+}
+
+// Get node by index
+template <typename T>
+ListNode<T> *LinkedList<T>::get_node_by_index(const int index) const {
+  if (this->is_empty())
+    throw std::length_error("List is empty!");
+
+  if (index < 0 || index > this->length - 1)
+    throw std::out_of_range("Provided index is out of range!");
+
+  ListNode<T> *temp = this->head;
+  int n = index;
+  while (n-- > 0)
+    temp = temp->next;
+
+  return temp;
 }
 
 // ---------

@@ -45,7 +45,7 @@ public:
     return *this;
   }
 
-  // get operatorы
+  // get operators
   inline T &operator*() const {
     if (this->index < 0 || this->index > this->size)
       throw std::out_of_range("Index is out of range!");

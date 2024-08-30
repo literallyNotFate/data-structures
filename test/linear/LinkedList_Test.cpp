@@ -420,8 +420,11 @@ TEST(LinkedListModify, RemoveNode) {
     temp = temp->next;
   }
 
-  ListNode<int> *node2 = nullptr;
-  EXPECT_THROW(l.remove_node(node2), std::invalid_argument)
+  ListNode<int> wrong(100);
+  EXPECT_THROW(l.remove_node(&wrong), std::invalid_argument)
+      << "Should throw invalid_argument if node was not found!";
+
+  EXPECT_THROW(l.remove_node(nullptr), std::invalid_argument)
       << "Should throw invalid_argument if node is equal to nullptr.";
 
   l.clear();
@@ -429,11 +432,146 @@ TEST(LinkedListModify, RemoveNode) {
       << "Should throw length_error if list is empty!";
 }
 
+TEST(LinkedListModify, RemoveBefore) {
+  std::vector<int> vec{5, 4, 3, 2};
+  LinkedList<int> l(vec);
+
+  ListNode<int> *node = l.get_tail();
+  l.remove_before(node);
+
+  EXPECT_THROW(l.remove_before(l.get_head()), std::invalid_argument)
+      << "Should throw invalid_argument if before node is null!";
+
+  node = l.get_head()->next;
+  l.remove_before(node);
+
+  EXPECT_THROW(l.remove_before(nullptr), std::invalid_argument)
+      << "Should throw invalid_argument if node is null!";
+
+  std::vector<int> expected{4, 2};
+  int index = 0;
+  ListNode<int> *temp = l.get_head();
+  while (temp != nullptr) {
+    EXPECT_EQ(temp->data, expected[index]) << "Values should be equal!";
+
+    index++;
+    temp = temp->next;
+  }
+
+  l.clear();
+  EXPECT_THROW(l.remove_before(node), std::length_error)
+      << "Should throw length_error if list is empty!";
+}
+
+TEST(LinkedListModify, RemoveAfter) {
+  std::vector<int> vec{1, 2, 3, 4, 5, 6, 7};
+  LinkedList<int> l(vec.begin(), vec.end());
+
+  ListNode<int> *node = l.get_head()->next->next->next;
+  l.remove_after(node);
+
+  node = l.get_tail()->prev;
+  l.remove_after(node);
+
+  EXPECT_THROW(l.remove_after(l.get_tail()), std::invalid_argument)
+      << "Should throw invalid_argument if after node is null!";
+
+  EXPECT_THROW(l.remove_after(nullptr), std::invalid_argument)
+      << "Should throw invalid_argument if node is null!";
+
+  std::vector<int> expected{1, 2, 3, 4, 6};
+  int index = 0;
+  ListNode<int> *temp = l.get_head();
+  while (temp != nullptr) {
+    EXPECT_EQ(temp->data, expected[index]) << "Values should be equal!";
+
+    index++;
+    temp = temp->next;
+  }
+
+  l.clear();
+  EXPECT_THROW(l.remove_after(node), std::length_error)
+      << "Should throw length_error if list is empty!";
+}
+
+TEST(LinkedListModify, RemoveValue) {
+  std::vector<char> vec{'a', 'b', 'c', 'd'};
+  LinkedList<char> l(vec);
+
+  l.remove_value('b');
+
+  EXPECT_THROW(l.remove_value('x'), std::invalid_argument)
+      << "Should throw invalid_argument if node with provided value was not "
+         "found!";
+
+  std::vector<char> expected{'a', 'c', 'd'};
+  int index = 0;
+  ListNode<char> *temp = l.get_head();
+  while (temp != nullptr) {
+    EXPECT_EQ(temp->data, expected[index]) << "Values should be equal!";
+
+    index++;
+    temp = temp->next;
+  }
+
+  l.clear();
+  EXPECT_THROW(l.remove_value('a'), std::length_error)
+      << "Should throw length_error if list is empty!";
+}
+
+TEST(LinkedListModify, RemoveAll) {
+  std::vector<double> vec{10.0, 20.0, 20.0, 10.0, 3.5,
+                          4.2,  50.0, 20.0, 12.5, 20.0};
+  LinkedList<double> l(vec);
+
+  l.remove_all(20.0);
+
+  EXPECT_THROW(l.remove_all(100.0), std::invalid_argument)
+      << "Should throw invalid_argument if node was not found!";
+
+  std::vector<double> expected{10.0, 10.0, 3.5, 4.2, 50.0, 12.5};
+  int index = 0;
+  ListNode<double> *temp = l.get_head();
+  while (temp != nullptr) {
+    EXPECT_EQ(temp->data, expected[index]) << "Values should be equal!";
+
+    index++;
+    temp = temp->next;
+  }
+
+  l.clear();
+  EXPECT_THROW(l.remove_all(10.0), std::length_error)
+      << "Should throw length_error if list is empty!";
+}
+
+TEST(LinkedListModify, RemoveIf) {
+  std::vector<std::string> vec{"hello", "hi", "abc", "world", "123"};
+  LinkedList<std::string> l(vec.begin(), vec.end());
+
+  l.remove_if([](std::string str) { return str.size() <= 3; });
+  l.remove_if([](std::string str) { return str.size() == 0; });
+
+  std::vector<std::string> expected{"hello", "world"};
+  int index = 0;
+  ListNode<std::string> *temp = l.get_head();
+  while (temp != nullptr) {
+    EXPECT_EQ(temp->data, expected[index]) << "Values should be equal!";
+
+    index++;
+    temp = temp->next;
+  }
+
+  l.clear();
+  EXPECT_THROW(l.remove_if([](std::string str) { return str.size() == 0; }),
+               std::length_error)
+      << "Should throw length_error if list is empty!";
+}
+
 // ----------
 // Iterators test
 // ----------
 
-TEST(ListIterators, IteratorBegin) {
+TEST(LinkedListIterators, IteratorBegin) {
   std::vector<int> vec{5, 4, 3, 2, 1};
   LinkedList<int> l(vec);
 
@@ -441,7 +579,7 @@ TEST(ListIterators, IteratorBegin) {
   EXPECT_EQ(*lit, 5) << "Begin iterator should be at the first element!";
 }
 
-TEST(ListIterators, IteratorEnd) {
+TEST(LinkedListIterators, IteratorEnd) {
   std::vector<int> vec{5, 4, 3, 2, 1};
   LinkedList<int> l(vec);
 
@@ -473,6 +611,31 @@ TEST(LinkedListMethods, EqualOperator) {
     index++;
     temp = temp->next;
   }
+}
+
+TEST(LinkedListMethods, Contains) {
+  std::vector<char> vec{'a', 'b', 'c', 'd', 'e'};
+  LinkedList<char> l(vec.begin(), vec.end());
+
+  ListNode<char> node('c');
+  EXPECT_TRUE(l.contains(&node))
+      << "Node with value 'c' should be in the list!";
+
+  node = ListNode('d');
+  EXPECT_TRUE(l.contains(&node))
+      << "Node with value 'd' should be in the list!";
+
+  node = ListNode('x');
+  EXPECT_FALSE(l.contains(&node))
+      << "Node with value 'd' should be in the list!";
+
+  ListNode<char> *wrong = nullptr;
+  EXPECT_THROW(l.contains(wrong), std::invalid_argument)
+      << "Should throw invalid_argument if node is null!";
+
+  l.clear();
+  EXPECT_THROW(l.contains(wrong), std::length_error)
+      << "Should throw length_error if list is empty!";
 }
 
 TEST(LinkedListMethods, ToVector) {
@@ -520,6 +683,30 @@ TEST(LinkedListMethods, ToString) {
 
   l.clear();
   EXPECT_THROW(std::string e = l.to_string(), std::length_error)
+      << "Should throw length_error if list is empty!";
+}
+
+TEST(LinkedListMethods, GetNode) {
+  std::vector<int> vec{1, 2, 3, 4, 5};
+  LinkedList<int> l(vec);
+
+  ListNode<int> *node = l.get_node_by_value(3);
+  EXPECT_EQ(node, l.get_head()->next->next) << "Nodes should be equal!";
+
+  EXPECT_THROW(l.get_node_by_value(100), std::invalid_argument)
+      << "Should throw invalid_argument if node with provided value was not "
+         "found!";
+
+  node = l.get_node_by_index(4);
+  EXPECT_EQ(node, l.get_tail()) << "Nodes should be equal!";
+
+  EXPECT_THROW(l.get_node_by_index(-100), std::out_of_range)
+      << "Should throw out_of_range if index is not valid!";
+
+  l.clear();
+  EXPECT_THROW(l.get_node_by_value(2), std::length_error)
+      << "Should throw length_error if list is empty!";
+  EXPECT_THROW(l.get_node_by_index(2), std::length_error)
       << "Should throw length_error if list is empty!";
 }
 
